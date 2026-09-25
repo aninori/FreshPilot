@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# uv
+uv.lock.bak
+
+# Data & model artifacts
+data/*.duckdb
+data/*.parquet
+mlruns/
+reports/*
+!reports/.gitkeep
+!reports/samples/
+
+# Env / secrets
+.env
+
+# Node / web
+web/node_modules/
+web/dist/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FreshPilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBFAF6; --surface:#FFFFFF; --surface-2:#F3F1EA; --text:#1D1F1B; --muted:#5E625A; --faint:#8B8F86;
+  --border:#E3E0D6; --green:#2F7A4B; --green-bg:#E7F2EA; --green-ink:#1E5233;
+  --violet:#5B4FC4; --violet-bg:#EEECFC; --violet-ink:#352C8A;
+  --amber:#B06A12; --amber-bg:#FBF0DD; --amber-ink:#6B3E06;
+  --gray-bg:#EFEDE6; --gray-ink:#444640; --red:#B23B3B;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141612; --surface:#1C1F1A; --surface-2:#232720; --text:#ECEDE7; --muted:#A8ACA2; --faint:#7D8177;
+    --border:#30352D; --green:#6BC48E; --green-bg:#1C3326; --green-ink:#BFE8CE;
+    --violet:#A69CF2; --violet-bg:#27234A; --violet-ink:#D8D3FB;
+    --amber:#E9A94F; --amber-bg:#3A2A12; --amber-ink:#F6D9A8;
+    --gray-bg:#2A2E27; --gray-ink:#D4D6CE; --red:#E58080;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141612; --surface:#1C1F1A; --surface-2:#232720; --text:#ECEDE7; --muted:#A8ACA2; --faint:#7D8177;
+  --border:#30352D; --green:#6BC48E; --green-bg:#1C3326; --green-ink:#BFE8CE;
+  --violet:#A69CF2; --violet-bg:#27234A; --violet-ink:#D8D3FB;
+  --amber:#E9A94F; --amber-bg:#3A2A12; --amber-ink:#F6D9A8;
+  --gray-bg:#2A2E27; --gray-ink:#D4D6CE; --red:#E58080;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+@media(min-width:720px){.wrap{padding:0 32px}}
+header.hero{padding:72px 0 48px;border-bottom:1px solid var(--border)}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:600}
+h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:clamp(36px,6vw,60px);line-height:1.05;margin:14px 0 18px;letter-spacing:-.01em}
+h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:clamp(26px,3.6vw,34px);line-height:1.15;margin-bottom:10px}
+h3{font-size:17px;font-weight:600;margin-bottom:6px}
+.lede{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:720px}
+.tagline{margin-top:28px;display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:15px;font-weight:500}
+.pill{padding:6px 12px;border-radius:999px;font-size:14px;font-weight:500}
+.p-green{background:var(--green-bg);color:var(--green-ink)}
+.p-violet{background:var(--violet-bg);color:var(--violet-ink)}
+.p-amber{background:var(--amber-bg);color:var(--amber-ink)}
+.p-gray{background:var(--gray-bg);color:var(--gray-ink)}
+.arrow{color:var(--faint)}
+section{padding:64px 0;border-bottom:1px solid var(--border)}
+.sec-intro{color:var(--muted);max-width:680px;margin-bottom:32px}
+.grid{display:grid;gap:16px}
+@media(min-width:720px){.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+.card p{color:var(--muted);font-size:15px}
+.num{font-family:Fraunces,serif;font-size:15px;color:var(--faint);margin-bottom:4px}
+/* pipeline */
+.pipeline{display:grid;gap:12px}
+.stage{display:grid;gap:12px;align-items:stretch}
+@media(min-width:720px){.stage{grid-template-columns:1fr 1fr}}
+.box{border-radius:12px;padding:18px 20px;border:1px solid transparent}
+.box .tag{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;display:block}
+.box p{font-size:15px}
+.det{background:var(--green-bg);color:var(--green-ink)}
+.det .tag{color:var(--green)}
+.llm{background:var(--violet-bg);color:var(--violet-ink)}
+.llm .tag{color:var(--violet)}
+.src{background:var(--gray-bg);color:var(--gray-ink)}
+.src .tag{color:var(--muted)}
+.empty{border:1px dashed var(--border);border-radius:12px;padding:18px 20px;color:var(--faint);font-size:14px;display:flex;align-items:center}
+.full{grid-column:1/-1}
+.down{text-align:center;color:var(--faint);font-size:18px;line-height:1}
+/* stack */
+.stack{display:grid;gap:10px}
+@media(min-width:720px){.stack-wrap{display:grid;grid-template-columns:1fr 170px;gap:12px}}
+.layer{display:grid;gap:6px;border-radius:12px;padding:16px 20px}
+@media(min-width:720px){.layer{grid-template-columns:170px 1fr;align-items:center}}
+.layer b{font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:3px 9px;border-radius:6px;background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.obs{border-radius:12px;padding:18px;background:var(--amber-bg);color:var(--amber-ink);display:flex;flex-direction:column;justify-content:center;gap:8px;margin-top:10px}
+@media(min-width:720px){.obs{margin-top:0}}
+.obs .chip{background:transparent;border-color:var(--amber)}
+/* agent graph */
+.graph{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 28px}
+.node{padding:10px 14px;border-radius:10px;font-family:"JetBrains Mono",monospace;font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--muted);margin-top:18px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+/* example */
+.example{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.ex-head{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center}
+.ex-body{padding:22px;display:grid;gap:20px}
+@media(min-width:720px){.ex-body{grid-template-columns:1fr 1fr}}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:15px}
+.kv dt{color:var(--muted)}
+.kv dd{font-family:"JetBrains Mono",monospace;font-size:14px;text-align:right}
+.quote{background:var(--violet-bg);color:var(--violet-ink);border-radius:10px;padding:16px 18px;font-size:15px}
+.quote .tag{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);display:block;margin-bottom:6px}
+/* table */
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th,.tbl td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.tbl th{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.tbl td:first-child{font-weight:500;white-space:nowrap}
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+pre{font-family:"JetBrains Mono",monospace;font-size:13.5px;line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;overflow-x:auto;color:var(--text)}
+pre .c{color:var(--faint)}
+ol.demo{list-style:none;counter-reset:d;display:grid;gap:10px}
+ol.demo li{counter-increment:d;display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:15px}
+ol.demo li::before{content:counter(d);font-family:Fraunces,serif;font-size:20px;color:var(--green);line-height:1.2}
+footer{padding:40px 0 64px;color:var(--faint);font-size:14px}
+.note{font-size:14px;color:var(--faint);margin-top:14px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Proof of concept · Fresh grocery operations</div>
+    <h1>FreshPilot</h1>
+    <p class="lede">An agentic layer for fresh-food ordering. Machine learning forecasts the range of demand, deterministic math decides the order, and LLM agents investigate exceptions, explain every number, and escalate only what a manager needs to see.</p>
+    <div class="tagline">
+      <span class="pill p-gray">Messy data</span><span class="arrow">→</span>
+      <span class="pill p-green">Clean catalog</span><span class="arrow">→</span>
+      <span class="pill p-green">ML forecast</span><span class="arrow">→</span>
+      <span class="pill p-green">Order decision</span><span class="arrow">→</span>
+      <span class="pill p-violet">Agent review</span><span class="arrow">→</span>
+      <span class="pill p-gray">Manager</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The problem</h2>
+    <p class="sec-intro">Fresh departments break the assumptions most retail systems are built on. Three blind spots drive waste and empty shelves at the same time.</p>
+    <div class="grid g3">
+      <div class="card"><div class="num">01</div><h3>Messy item data</h3><p>The same banana appears as three SKUs with different names and units across vendor feeds, so demand history gets split and orders get miscalculated.</p></div>
+      <div class="card"><div class="num">02</div><h3>Phantom inventory</h3><p>Spoilage, shrink, and miscounts go unrecorded. The system shows stock that isn't on the shelf, so it never reorders.</p></div>
+      <div class="card"><div class="num">03</div><h3>Point forecasts</h3><p>A single demand number hides risk. For perishables, the cost of over-ordering and under-ordering differs by item and must be weighed explicitly.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sec-intro">Five stages. Deterministic code and ML compute every number; LLM agents only review, investigate, and explain.</p>
+    <div class="pipeline">
+      <div class="stage"><div class="box src full"><span class="tag">Input</span><h3>Messy source data</h3><p>Vendor catalogs, POS sales, receipts, shrink logs, promotions, weather.</p></div></div>
+      <div class="down">↓</div>
+      <div class="stage">
+        <div class="box det"><span class="tag">Stage 1 · Deterministic</span><h3>Catalog reconciliation</h3><p>Parse units ("CS/12 5LB" → 60 lb), embed and fuzzy-match names, score each match. High confidence merges automatically.</p></div>
+        <div class="box llm"><span class="tag">Stage 1 · Agent</span><h3>Match review agent</h3><p>Reviews only the uncertain middle band and proposes merge or keep-separate with evidence. A validator applies the decision.</p></div>
+      </div>
+      <div class="down">↓</div>
+      <div class="stage">
+        <div class="box det"><span class="tag">Stage 2 · ML + math</span><h3>Forecast and order engine</h3><p>LightGBM quantile model predicts P10–P90 demand, conformal calibration keeps intervals honest, and a newsvendor optimizer turns the range into a case-rounded order.</p></div>
+        <div class="empty">No LLM here. Order quantities are always computed, never generated.</div>
+      </div>
+      <div class="down">↓</div>
+      <div class="stage">
+        <div class="box det"><span class="tag">Stage 3 · Deterministic</span><h3>Exception detector</h3><p>Flags phantom stock (Poisson test on unexpected zero sales), shrink spikes, large order swings, and low-confidence catalog matches.</p></div>
+        <div class="box llm"><span class="tag">Stage 4 · Agent</span><h3>Investigator agent</h3><p>Uses tools to pull history and forecast drivers, recommends an action, then auto-approves routine items or escalates risky ones.</p></div>
+      </div>
+      <div class="down">↓</div>
+      <div class="stage"><div class="box src full"><span class="tag">Stage 5 · Output</span><h3>Manager dashboard</h3><p>A short escalation queue with plain-language explanations, plus waste and stockout metrics against a baseline ordering policy.</p></div></div>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--green-bg);border:1px solid var(--green)"></i>Deterministic / ML: computes and decides</span>
+      <span><i class="sw" style="background:var(--violet-bg);border:1px solid var(--violet)"></i>LLM agent: reviews and explains</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Technology architecture</h2>
+    <p class="sec-intro">Six layers, built bottom-up, with tracing and evaluation running across all of them.</p>
+    <div class="stack-wrap">
+      <div class="stack">
+        <div class="layer src"><b>Presentation</b><div class="chips"><span class="chip">React web app</span><span class="chip">FastAPI</span></div></div>
+        <div class="layer llm"><b>Agent layer</b><div class="chips"><span class="chip">LangGraph</span><span class="chip">Claude tool use</span><span class="chip">Pydantic schemas</span></div></div>
+        <div class="layer det"><b>Guardrails</b><div class="chips"><span class="chip">Policy validator</span><span class="chip">simulate_order</span><span class="chip">Human approval gate</span></div></div>
+        <div class="layer det"><b>Decision engine</b><div class="chips"><span class="chip">Newsvendor optimizer</span><span class="chip">Poisson anomaly tests</span><span class="chip">Exception rules</span></div></div>
+        <div class="layer det"><b>ML layer</b><div class="chips"><span class="chip">LightGBM quantile</span><span class="chip">MAPIE conformal</span><span class="chip">SHAP</span><span class="chip">sentence-transformers</span><span class="chip">rapidfuzz</span><span class="chip">pint</span></div></div>
+        <div class="layer src"><b>Data layer</b><div class="chips"><span class="chip">Synthetic generator</span><span class="chip">DuckDB</span><span class="chip">Parquet</span></div></div>
+      </div>
+      <div class="obs"><b>Observability &amp; evals</b><div class="chips"><span class="chip">Langfuse</span><span class="chip">MLflow</span><span class="chip">pytest evals</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Agent workflow</h2>
+    <p class="sec-intro">The investigator runs as a LangGraph state machine. The LLM sits in the middle, fenced by deterministic steps on both sides.</p>
+    <div class="graph">
+      <span class="node det">triage</span><span class="arrow">→</span>
+      <span class="node llm">investigate</span><span class="arrow">→</span>
+      <span class="node det">validate</span><span class="arrow">→</span>
+      <span class="node det">route</span><span class="arrow">→</span>
+      <span class="node llm">narrate</span>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>Agent tools</h3><p><code>get_sales_history</code>, <code>get_inventory</code>, <code>explain_forecast</code> (SHAP drivers), <code>simulate_order</code>, <code>get_catalog_match</code>. The agent can only read data or run the engine; it cannot write an order directly.</p></div>
+      <div class="card"><h3>Structured output</h3><p>Every finding returns a Pydantic object: <code>finding</code>, <code>evidence</code>, <code>recommended_action</code>, <code>risk_level</code>, <code>route</code>. Numbers in the narrative are checked against source data before display.</p></div>
+      <div class="card"><h3>Guardrails</h3><p>Any quantity change must come from <code>simulate_order</code> and stay within a policy band. Actions above the risk threshold pause for manager approval.</p></div>
+      <div class="card"><h3>Routing</h3><p>Routine, low-risk items are auto-approved with an audit note. Only high-risk or low-confidence items reach the manager queue.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>One item, end to end</h2>
+    <p class="sec-intro">An illustrative example of what a manager sees for a single escalated item.</p>
+    <div class="example">
+      <div class="ex-head"><h3 style="margin:0">Strawberries 1 lb clamshell · Store 318</h3><span class="pill p-amber">Escalated · likely phantom stock</span></div>
+      <div class="ex-body">
+        <dl class="kv">
+          <dt>Forecast P10 / P50 / P90</dt><dd>30 / 45 / 65 lb</dd>
+          <dt>Target quantile (short shelf life)</dt><dd>P60 → 50 lb</dd>
+          <dt>Book inventory</dt><dd>30 lb</dd>
+          <dt>Sales last 3 days</dt><dd>0 lb</dd>
+          <dt>Chance of 3 zero days if stock were real</dt><dd>&lt; 0.1%</dd>
+          <dt>Engine order (trusting book stock)</dt><dd>20 lb</dd>
+          <dt>Engine order (if shelf is empty)</dt><dd>48 lb · 6 cases</dd>
+        </dl>
+        <div class="quote"><span class="tag">Agent explanation</span>The system shows 30 lb on hand, but this item normally sells about 15 lb a day and has sold nothing for three days, which is very unlikely if the stock were really there. Please do a quick shelf count. If it is empty, order 6 cases (48 lb); the higher quantity also reflects a promotion starting Friday.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>How success is measured</h2>
+    <p class="sec-intro">The synthetic data ships with an answer key, so every stage is scored against known truth rather than judged by eye.</p>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Area</th><th>Metric</th><th>Compared against</th></tr></thead>
+        <tbody>
+          <tr><td>Catalog</td><td>Match precision and recall; share sent to human review</td><td>Planted duplicate SKUs</td></tr>
+          <tr><td>Forecast</td><td>Pinball loss, WAPE, 80% interval coverage</td><td>Seasonal-naive baseline</td></tr>
+          <tr><td>Exceptions</td><td>Phantom-stock detection precision and recall</td><td>Planted phantom-stock events</td></tr>
+          <tr><td>Agent</td><td>Numeric faithfulness of explanations; correct routing rate</td><td>Source data and answer key</td></tr>
+          <tr><td>Business</td><td>Waste %, stockout %, manager items per day</td><td>Baseline ordering policy</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Two-minute demo</h2>
+    <ol class="demo" style="margin-top:24px">
+      <li>Show the messy vendor catalogs and the cleaned catalog with confidence scores.</li>
+      <li>Show one item's forecast range and how the order quantity is chosen from it.</li>
+      <li>Run the exception detector: a handful of items flagged out of a full department.</li>
+      <li>Open the manager queue: only the risky items, each with a grounded explanation.</li>
+      <li>Close on the numbers: waste and stockouts against the baseline, and a trace of one agent run.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Repository layout</h2>
+    <pre>fresh-exception-agent/
+├── data/          <span class="c"># synthetic generator, answer key, DuckDB</span>
+├── catalog/       <span class="c"># unit parsing, matching, match review agent</span>
+├── forecasting/   <span class="c"># LightGBM quantiles, conformal, SHAP</span>
+├── decisions/     <span class="c"># newsvendor optimizer, exception rules</span>
+├── agents/        <span class="c"># LangGraph graph, tools, prompts, schemas</span>
+├── guardrails/    <span class="c"># policy validator, approval gate</span>
+├── api/           <span class="c"># FastAPI service</span>
+├── web/           <span class="c"># React + Vite web app</span>
+├── evals/         <span class="c"># metrics and answer-key tests</span>
+└── README.md      <span class="c"># architecture and results</span></pre>
+    <p class="note">All data is synthetic. No retailer or customer data is used.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">FreshPilot · Proof of concept by Naga Sai Anirudh Nori</div>
+</footer>
+
+</body>
+</html>

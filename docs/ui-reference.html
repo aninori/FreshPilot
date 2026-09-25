@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FreshPilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#F4F2EC;--panel:#FFFFFF;--panel-2:#FAF8F3;--ink:#17211B;--muted:#5C6760;--faint:#8F998F;--line:#E6E2D8;
+  --brand:#13553A;--brand-2:#1E7A52;--brand-soft:#E3F0E8;--brand-ink:#0E3F2B;
+  --hero:#13553A;--hero-2:#0E4430;--on-hero:#F3FBF6;--on-hero-2:#B9DCC8;
+  --tomato:#D9502B;--tomato-soft:#FCE9E2;--tomato-ink:#7E2A12;
+  --gold:#B87A12;--gold-soft:#FBF1DC;--gold-ink:#6B4506;
+  --sky:#2F6FB0;--sky-soft:#E6EFF8;--sky-ink:#1B4470;
+  --plum:#6A4FB6;--plum-soft:#EFEBFA;
+  --base:#9AA39C;
+  --shadow:0 1px 2px rgba(23,33,27,.04),0 4px 16px rgba(23,33,27,.05);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101512;--panel:#171D19;--panel-2:#1C231E;--ink:#EBF0EC;--muted:#A7B2AA;--faint:#76827A;--line:#28312B;
+  --brand:#5CC08D;--brand-2:#5CC08D;--brand-soft:#1A3326;--brand-ink:#C6EBD5;
+  --hero:#123A29;--hero-2:#0E2F21;--on-hero:#EEF8F2;--on-hero-2:#9FCBB2;
+  --tomato:#F08463;--tomato-soft:#3A1E15;--tomato-ink:#F9CDBF;
+  --gold:#E3AE4F;--gold-soft:#372A12;--gold-ink:#F4DDB0;
+  --sky:#86B6EA;--sky-soft:#18293C;--sky-ink:#CFE2F7;
+  --plum:#B3A1EE;--plum-soft:#27213D;
+  --base:#6E7870;
+  --shadow:none;
+}}
+:root[data-theme="dark"]{
+  --bg:#101512;--panel:#171D19;--panel-2:#1C231E;--ink:#EBF0EC;--muted:#A7B2AA;--faint:#76827A;--line:#28312B;
+  --brand:#5CC08D;--brand-2:#5CC08D;--brand-soft:#1A3326;--brand-ink:#C6EBD5;
+  --hero:#123A29;--hero-2:#0E2F21;--on-hero:#EEF8F2;--on-hero-2:#9FCBB2;
+  --tomato:#F08463;--tomato-soft:#3A1E15;--tomato-ink:#F9CDBF;
+  --gold:#E3AE4F;--gold-soft:#372A12;--gold-ink:#F4DDB0;
+  --sky:#86B6EA;--sky-soft:#18293C;--sky-ink:#CFE2F7;
+  --plum:#B3A1EE;--plum-soft:#27213D;
+  --base:#6E7870;
+  --shadow:none;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;color:inherit}
+.serif{font-family:Fraunces,Georgia,serif}
+.app{display:grid;grid-template-columns:1fr;min-height:100vh}
+@media(min-width:960px){.app{grid-template-columns:244px 1fr}}
+
+/* sidebar */
+.side{background:var(--panel);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;height:100vh}
+@media(max-width:959px){.side{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;gap:4px}}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 18px}
+.mark{width:32px;height:32px;border-radius:10px;background:var(--brand);color:var(--panel);display:grid;place-items:center;font-size:18px}
+.brand b{font-family:Fraunces,serif;font-weight:600;font-size:19px;letter-spacing:-.01em}
+.store{margin:0 4px 16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;gap:10px;background:var(--panel-2)}
+.store .ti{font-size:18px;color:var(--brand)}
+.store small{display:block;color:var(--faint);font-size:12px;line-height:1.2}
+.store span{font-weight:500;font-size:13.5px}
+@media(max-width:959px){.brand,.store,.side-sec,.side-foot{display:none}}
+.side-sec{font-size:11.5px;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;padding:14px 10px 6px}
+.nav{display:flex;align-items:center;gap:11px;border:0;background:transparent;color:var(--muted);padding:9px 10px;border-radius:10px;text-align:left;white-space:nowrap;font-weight:500}
+.nav .ti{font-size:19px}
+.nav:hover{background:var(--panel-2);color:var(--ink)}
+.nav.on{background:var(--brand-soft);color:var(--brand-ink)}
+.nav .pill{margin-left:auto;background:var(--tomato);color:#fff;font-size:11.5px;border-radius:999px;padding:0 7px;line-height:19px;min-width:20px;text-align:center}
+.nav .pill:empty{display:none}
+.side-foot{margin-top:auto;padding:14px 10px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);display:grid;place-items:center;font-weight:600;font-size:13px}
+.side-foot small{display:block;color:var(--faint);font-size:12px;line-height:1.2}
+
+/* main */
+main{padding:22px 16px 60px;min-width:0}
+@media(min-width:960px){main{padding:28px 36px 64px}}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.top h1{font-family:Fraunces,serif;font-weight:600;font-size:26px;letter-spacing:-.01em;line-height:1.2}
+.top p{color:var(--muted)}
+.top-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cutoff{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;color:var(--muted)}
+.cutoff b{color:var(--ink);font-weight:600}
+.cutoff .ti{color:var(--gold);font-size:17px}
+.ask-btn{display:flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:9px 16px;font-weight:500}
+.ask-btn .ti{font-size:17px}
+.view{display:none}.view.on{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.view.on{animation:none}}
+
+/* hero */
+.hero{background:var(--hero);color:var(--on-hero);border-radius:20px;padding:26px 28px;display:grid;gap:22px;position:relative;overflow:hidden;margin-bottom:18px}
+@media(min-width:1100px){.hero{grid-template-columns:1.4fr 1fr;align-items:center}}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:var(--hero-2);opacity:.9}
+.hero > *{position:relative;z-index:1}
+.hero .kick{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--on-hero-2);margin-bottom:10px}
+.live{width:8px;height:8px;border-radius:50%;background:#7EE2A8;box-shadow:0 0 0 0 rgba(126,226,168,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(126,226,168,.55)}70%{box-shadow:0 0 0 9px rgba(126,226,168,0)}100%{box-shadow:0 0 0 0 rgba(126,226,168,0)}}
+@media(prefers-reduced-motion:reduce){.live{animation:none}}
+.hero h2{font-family:Fraunces,serif;font-weight:500;font-size:clamp(24px,3vw,32px);line-height:1.2;letter-spacing:-.01em}
+.hero h2 em{font-style:normal;color:#9FE5BD}
+.hero .cta{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+.btn-hero{background:#F3FBF6;color:#0E3F2B;border:0;border-radius:999px;padding:10px 18px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.btn-ghost{background:transparent;color:var(--on-hero);border:1px solid rgba(243,251,246,.35);border-radius:999px;padding:10px 18px;font-weight:500}
+.agents{display:grid;gap:10px}
+.agent-row{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:11px 14px}
+.agent-row .ic{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:18px;flex:none}
+.agent-row b{font-weight:500;display:block;font-size:14px}
+.agent-row small{color:var(--on-hero-2);font-size:12.5px}
+.agent-row .st{margin-left:auto;font-size:12px;color:#9FE5BD;display:flex;align-items:center;gap:6px;white-space:nowrap}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px}
+@media(min-width:1100px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.tile .l{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.tile .l .ti{font-size:17px}
+.tile .v{font-family:Fraunces,serif;font-size:32px;font-weight:600;letter-spacing:-.02em;margin-top:6px;line-height:1.1}
+.tile .d{font-size:12.5px;margin-top:4px;color:var(--brand)}
+.tile .d.neutral{color:var(--faint)}
+
+.cols{display:grid;gap:18px}
+@media(min-width:1180px){.cols{grid-template-columns:1.55fr 1fr}}
+.cols>*,.cols>*>*{min-width:0}
+.card{min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:18px 20px 6px;flex-wrap:wrap}
+.card-h h3{font-size:16px;font-weight:600}
+.card-h p{color:var(--faint);font-size:13px}
+.card-b{padding:12px 20px 20px}
+.link{color:var(--brand);background:none;border:0;font-weight:500;font-size:13.5px;display:inline-flex;align-items:center;gap:4px}
+
+/* departments */
+.depts{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.dept{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--panel-2);display:flex;flex-direction:column;gap:10px}
+.dept-top{display:flex;align-items:center;justify-content:space-between}
+.dept .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:19px}
+.dept b{font-weight:600;font-size:14.5px}
+.dept .meta{font-size:12.5px;color:var(--muted)}
+.meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter span{display:block;height:100%;border-radius:3px;background:var(--brand-2)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.c-ok{background:var(--brand-soft);color:var(--brand-ink)}
+.c-warn{background:var(--tomato-soft);color:var(--tomato-ink)}
+.c-gold{background:var(--gold-soft);color:var(--gold-ink)}
+.c-sky{background:var(--sky-soft);color:var(--sky-ink)}
+
+/* feed */
+.feed{list-style:none;display:grid;gap:2px;max-height:420px;overflow:hidden}
+.feed li{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:start;padding:10px 4px;border-bottom:1px solid var(--line)}
+.feed li:last-child{border-bottom:0}
+.feed li.new{animation:slide .5s ease}
+@keyframes slide{from{opacity:0;transform:translateY(-8px);background:var(--brand-soft)}to{opacity:1;transform:none;background:transparent}}
+@media(prefers-reduced-motion:reduce){.feed li.new{animation:none}}
+.feed .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.feed b{font-weight:500}
+.feed p{font-size:13.5px;color:var(--muted);line-height:1.45}
+.feed time{font-size:12px;color:var(--faint);white-space:nowrap}
+
+/* chart */
+.chart-wrap{position:relative}
+.chart-wrap svg{width:100%;height:auto;display:block;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:7px 10px;border-radius:8px;opacity:0;transition:opacity .12s;white-space:nowrap;transform:translate(-50%,-110%)}
+.tip.on{opacity:1}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+/* inbox */
+.inbox-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.progress{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13.5px}
+.progress .meter{width:160px;height:8px}
+.decisions{display:grid;gap:14px}
+.dec{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;transition:opacity .3s}
+.dec-main{display:grid;gap:18px;padding:20px}
+@media(min-width:1100px){.dec-main{grid-template-columns:1.25fr 1fr}}
+.dec-head{display:flex;gap:14px;align-items:flex-start}
+.thumb{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:27px;flex:none}
+.dec-head h3{font-size:18px;font-weight:600;line-height:1.25}
+.dec-head .sub{color:var(--faint);font-size:13px;margin:2px 0 8px}
+.noticed{font-size:15px;line-height:1.6;margin-top:14px}
+.reasons{list-style:none;display:grid;gap:8px;margin-top:14px}
+.reasons li{display:flex;gap:10px;font-size:14px;color:var(--muted);align-items:flex-start}
+.reasons .ti{font-size:17px;color:var(--brand);margin-top:1px}
+.rec{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.rec small{color:var(--faint);font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.rec .big{font-family:Fraunces,serif;font-size:26px;font-weight:600;line-height:1.15}
+.rec .big span{font-family:Inter,sans-serif;font-size:14px;font-weight:400;color:var(--muted)}
+.rec .pre{font-size:13.5px;color:var(--tomato-ink);background:var(--tomato-soft);border-radius:10px;padding:8px 10px;display:flex;gap:8px;align-items:flex-start}
+.rec .pre .ti{font-size:16px;margin-top:1px}
+.impact{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.impact b{color:var(--ink);font-weight:600}
+.conf{display:inline-flex;gap:3px;vertical-align:middle;margin-left:4px}
+.conf i{width:6px;height:12px;border-radius:2px;background:var(--line)}
+.conf i.f{background:var(--brand-2)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--faint)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:var(--panel)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn .ti{font-size:16px}
+.adjust{display:none;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px}
+.adjust.on{display:flex}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{border:0;background:var(--panel);width:34px;height:34px;font-size:16px}
+.stepper output{min-width:64px;text-align:center;font-weight:600}
+.guard{font-size:13px;width:100%}
+.guard.bad{color:var(--tomato)}
+.guard.good{color:var(--brand)}
+.math-toggle{border-top:1px solid var(--line);padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--panel-2)}
+.math{display:none;padding:4px 20px 20px;background:var(--panel-2)}
+.math.on{display:block}
+.range{margin:14px 0 6px;position:relative;height:44px}
+.range .track{position:absolute;left:0;right:0;top:18px;height:8px;border-radius:4px;background:var(--line)}
+.range .band{position:absolute;top:18px;height:8px;border-radius:4px;background:var(--brand-soft);border:1px solid var(--brand-2)}
+.range .pt{position:absolute;top:12px;width:4px;height:20px;border-radius:2px;background:var(--brand);transform:translateX(-2px)}
+.range .lab{position:absolute;top:34px;font-size:12px;color:var(--muted);transform:translateX(-50%);white-space:nowrap}
+.range .lab.top{top:-4px}
+.mathgrid{display:grid;gap:8px 20px;grid-template-columns:1fr auto;font-size:13.5px;margin-top:22px;max-width:520px}
+.mathgrid dt{color:var(--muted)}
+.mathgrid dd{text-align:right;font-weight:500}
+.done-row{display:flex;align-items:center;gap:14px;padding:16px 20px;flex-wrap:wrap}
+.done-row .ti-circle-check{font-size:24px;color:var(--brand)}
+.done-row b{font-weight:500}
+.done-row p{color:var(--muted);font-size:13.5px}
+.empty-state{text-align:center;padding:50px 20px;background:var(--panel);border:1px solid var(--line);border-radius:18px}
+.empty-state .ti{font-size:42px;color:var(--brand)}
+.empty-state h3{font-family:Fraunces,serif;font-size:22px;margin:8px 0 4px}
+.empty-state p{color:var(--muted)}
+
+/* orders */
+.otable{width:100%;border-collapse:collapse;font-size:14px}
+.otable th,.otable td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line)}
+.otable th{font-size:12px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.otable tr:last-child td{border-bottom:0}
+.otable td.num,.otable th.num{text-align:right;font-variant-numeric:tabular-nums}
+.oname{display:flex;align-items:center;gap:10px;font-weight:500}
+.oname .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px}
+.tw{overflow-x:auto}
+.send-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 20px;border-top:1px solid var(--line)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* impact */
+.big-stats{display:grid;gap:14px;grid-template-columns:repeat(2,1fr);margin-bottom:18px}
+@media(min-width:1100px){.big-stats{grid-template-columns:repeat(4,1fr)}}
+.bars{display:grid;gap:14px}
+.barrow .lab{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px}
+.barrow .lab b{font-weight:500}
+.barrow .lab span{color:var(--brand);font-weight:500}
+.bpair{display:grid;gap:4px}
+.bline{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center;font-size:12.5px;color:var(--muted)}
+.btrack{height:12px;border-radius:0 4px 4px 0;position:relative}
+.btrack span{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+.story{display:grid;gap:14px}
+@media(min-width:900px){.story{grid-template-columns:repeat(3,1fr)}}
+.story .s{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.story .ti{font-size:22px;color:var(--brand)}
+.story b{display:block;margin:6px 0 4px;font-weight:600}
+.story p{color:var(--muted);font-size:13.5px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,15,12,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--panel);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .3s ease;z-index:21;display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.dr-h{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.dr-h .mark{width:36px;height:36px}
+.dr-h b{display:block;font-weight:600}
+.dr-h small{color:var(--faint);font-size:12.5px;display:flex;align-items:center;gap:6px}
+.dr-h .x{margin-left:auto;border:0;background:transparent;font-size:22px;color:var(--muted)}
+.msgs{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14px;line-height:1.55}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--bg);border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--panel-2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.ai ul{margin:6px 0 0 18px}
+.msg.ai .src{margin-top:8px;font-size:12px;color:var(--faint);display:flex;gap:6px;align-items:center}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--faint);margin-right:3px;animation:bl 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.3}50%{opacity:1}}
+.sugg{display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 12px}
+.sugg button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.sugg button:hover{color:var(--ink);border-color:var(--faint)}
+.composer{display:flex;gap:8px;padding:14px 20px 20px;border-top:1px solid var(--line)}
+.composer input{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--panel-2);color:var(--ink);font:inherit}
+.composer button{border:0;background:var(--brand);color:var(--panel);border-radius:12px;width:44px;font-size:18px}
+.c-plum{background:var(--plum-soft);color:var(--plum)}
+.tech{display:grid;gap:14px;padding-top:6px}
+@media(min-width:1100px){.tech{grid-template-columns:1.25fr 1fr}}
+.tbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.tbox h4{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:8px}
+.mini svg{width:100%;height:auto;display:block}
+.drv{display:grid;grid-template-columns:118px 1fr 40px;gap:8px;align-items:center;font-size:12.5px;margin-top:7px}
+.dbar{height:7px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.dbar span{position:absolute;top:0;bottom:0;border-radius:4px}
+.evid{list-style:none;display:grid;gap:6px;font-size:12.5px;color:var(--muted)}
+.evid li{display:flex;gap:7px;align-items:flex-start}.evid .ti{color:var(--brand);font-size:14px;margin-top:2px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+.omath{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:900px){.omath{grid-template-columns:repeat(5,1fr)}}
+.omath div{background:var(--panel-2);border-radius:10px;padding:10px 12px}
+.omath small{display:block;font-size:11.5px;color:var(--faint)}
+.omath b{font-weight:600;font-size:14px}
+.omath .final{background:var(--brand-soft);color:var(--brand-ink)}
+.omath .final small{color:var(--brand)}
+.types{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+@media(min-width:900px){.types{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1280px){.types{grid-template-columns:repeat(6,1fr)}}
+.type{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:3px;box-shadow:var(--shadow)}
+.type:hover{border-color:var(--faint)}
+.type.on{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.type .n{font-family:Fraunces,serif;font-size:26px;font-weight:600;line-height:1.15}
+.type .t{font-weight:600;font-size:13.5px;display:flex;gap:6px;align-items:center}
+.type p{font-size:12px;color:var(--muted);line-height:1.4}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+.toolbar input,.toolbar select{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--panel-2);color:var(--ink);font:inherit}
+.toolbar input{flex:1;min-width:200px}
+.toolbar .cnt{color:var(--muted);font-size:13px;margin-left:auto}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--panel-2)}
+tr.clickable td:first-child .ti{transition:transform .2s;color:var(--faint)}
+tr.open td:first-child .ti{transform:rotate(90deg)}
+.row-exp td{background:var(--panel-2)}
+.spot{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;padding:4px 0}
+.spot small{display:block;color:var(--faint);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+.spot b{font-weight:600}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+.pager .btn{padding:6px 12px}
+.why{color:var(--muted);font-size:13.5px}
+.idl{display:block;color:var(--faint);font-size:11.5px;font-family:ui-monospace,Menlo,monospace}
+.srcl{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;display:block;color:var(--muted)}
+.cbar{display:flex;align-items:center;gap:8px;min-width:120px}
+.cbar .meter{flex:1}
+.gantt{display:grid;gap:7px}
+.grow{display:grid;grid-template-columns:170px 1fr 58px;gap:10px;align-items:center;font-size:13px}
+.grow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grow .nm small{display:block;color:var(--faint);font-size:11.5px}
+.gtrack{position:relative;height:14px;background:var(--panel-2);border-radius:4px}
+.gtrack span{position:absolute;top:0;bottom:0;border-radius:4px;min-width:3px}
+.grow .dur{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.k-det{background:var(--brand-2)}.k-ml{background:var(--sky)}.k-llm{background:var(--plum)}
+.steps{list-style:none;display:grid;padding:6px 0}
+.steps li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;padding:6px 0;position:relative;font-size:13px;align-items:start}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:10px;top:26px;bottom:-6px;width:1px;background:var(--line)}
+.sdot{width:21px;height:21px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:600}
+.s-det{background:var(--brand-soft);color:var(--brand-ink)}.s-llm{background:var(--plum-soft);color:var(--plum)}.s-ml{background:var(--sky-soft);color:var(--sky-ink)}.s-tool{background:var(--panel);color:var(--muted);border:1px solid var(--line)}.s-bad{background:var(--tomato-soft);color:var(--tomato-ink)}
+.steps time{color:var(--faint);font-size:12px;font-variant-numeric:tabular-nums}
+.events{list-style:none;display:grid}
+.events li{display:grid;grid-template-columns:30px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.events li:last-child{border-bottom:0}
+.events .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px}
+.events p{color:var(--muted);font-size:13px;margin-top:2px}
+.cov{position:relative;height:10px;border-radius:5px;background:var(--line);margin:10px 0 22px}
+.cov span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--brand-2)}
+.cov i{position:absolute;top:-4px;width:2px;height:18px;background:var(--ink)}
+.cov em{position:absolute;top:14px;font-size:11.5px;color:var(--muted);font-style:normal;transform:translateX(-50%);white-space:nowrap}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,16px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:30;display:flex;gap:8px;align-items:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side" aria-label="Main">
+    <div class="brand"><div class="mark"><i class="ti ti-leaf" aria-hidden="true"></i></div><b>FreshPilot</b></div>
+    <div class="store"><i class="ti ti-building-store" aria-hidden="true"></i><div><small>Store</small><span>#318 · Riverside</span></div></div>
+    <button class="nav on" data-view="home"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Today</button>
+    <button class="nav" data-view="inbox"><i class="ti ti-sparkles" aria-hidden="true"></i>Decisions <span class="pill" id="nav-count"></span></button>
+    <button class="nav" data-view="review"><i class="ti ti-list-search" aria-hidden="true"></i>Agent review</button>
+    <button class="nav" data-view="orders"><i class="ti ti-truck-delivery" aria-hidden="true"></i>Orders</button>
+    <button class="nav" data-view="catalog"><i class="ti ti-tags" aria-hidden="true"></i>Catalog <span class="pill" id="cat-count"></span></button>
+    <button class="nav" data-view="impact"><i class="ti ti-chart-line" aria-hidden="true"></i>Impact</button>
+    <div class="side-sec">Platform</div>
+    <button class="nav" data-view="obs"><i class="ti ti-activity-heartbeat" aria-hidden="true"></i>Observability</button>
+    <div class="side-sec">Agents</div>
+    <button class="nav" data-ask="What are the agents doing right now?"><i class="ti ti-message-chatbot" aria-hidden="true"></i>Ask FreshPilot</button>
+    <div class="side-foot"><div class="avatar">MR</div><div><span style="font-weight:500;font-size:13.5px">Maria Reyes</span><small>Fresh department manager</small></div></div>
+  </nav>
+
+  <main>
+    <div class="top">
+      <div><h1 id="greet">Good afternoon, Maria</h1><p id="subtitle">Here's what your agents handled today.</p></div>
+      <div class="top-r">
+        <div class="cutoff"><i class="ti ti-clock-hour-4" aria-hidden="true"></i>Orders lock in <b id="countdown">—</b></div>
+        <button class="ask-btn" data-ask=""><i class="ti ti-sparkles" aria-hidden="true"></i>Ask FreshPilot</button>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <section class="view on" id="v-home">
+      <div class="hero">
+        <div>
+          <div class="kick"><span class="live"></span>Agents working · last run 2 min ago</div>
+          <h2>Your agents reviewed <em>1,284 items</em> today. They handled <em>1,279</em> on their own, and <span id="hero-need">5 need</span> your call.</h2>
+          <div class="cta">
+            <button class="btn-hero" data-go="inbox"><i class="ti ti-arrow-right" aria-hidden="true"></i><span id="hero-btn">Review 5 decisions</span></button>
+            <button class="btn-ghost" data-go="review">See what they handled</button>
+          </div>
+        </div>
+        <div class="agents">
+          <div class="agent-row"><div class="ic"><i class="ti ti-shopping-cart" aria-hidden="true"></i></div><div><b>Ordering agent</b><small>1,284 orders prepared, 1,279 auto-approved</small></div><span class="st"><i class="ti ti-check" aria-hidden="true"></i>Done</span></div>
+          <div class="agent-row"><div class="ic"><i class="ti ti-eye-search" aria-hidden="true"></i></div><div><b>Shelf check agent</b><small>2 shelves likely empty, 1 quality issue</small></div><span class="st"><span class="live"></span>Watching</span></div>
+          <div class="agent-row"><div class="ic"><i class="ti ti-list-check" aria-hidden="true"></i></div><div><b>Catalog agent</b><small>Cleaned 146 vendor listings this week</small></div><span class="st"><i class="ti ti-check" aria-hidden="true"></i>Done</span></div>
+        </div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><div class="l"><i class="ti ti-trash-off" aria-hidden="true"></i>Waste avoided this week</div><div class="v" data-count="4820" data-pre="$">$0</div><div class="d">▼ 38% less food thrown away</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-shield-check" aria-hidden="true"></i>Sales protected</div><div class="v" data-count="7310" data-pre="$">$0</div><div class="d">Empty shelves caught early</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-clock-bolt" aria-hidden="true"></i>Team hours saved</div><div class="v" data-count="11.5" data-dec="1">0</div><div class="d">Ordering time down to 20 min/day</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-circle-check" aria-hidden="true"></i>Shelves in stock</div><div class="v" data-count="97.8" data-dec="1" data-suf="%">0%</div><div class="d">▲ 2.1 pts vs last month</div></div>
+      </div>
+
+      <div class="cols">
+        <div style="display:grid;gap:18px">
+          <div class="card">
+            <div class="card-h"><div><h3>Departments</h3><p>Today's order status by department</p></div><button class="link" data-go="orders">All orders <i class="ti ti-chevron-right" aria-hidden="true"></i></button></div>
+            <div class="card-b"><div class="depts" id="depts"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><div><h3>Food waste cost per week</h3><p>Produce, Store #318 · FreshPilot turned on in week 5</p></div></div>
+            <div class="card-b"><div class="chart-wrap" id="wasteChart"></div>
+              <div class="legend"><span><i style="background:var(--brand-2)"></i>Weekly waste cost ($)</span></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div><h3>Live agent activity</h3><p>What your agents are doing right now</p></div><span class="chip c-ok"><span class="live" style="background:var(--brand-2)"></span>Live</span></div>
+          <div class="card-b"><ul class="feed" id="feed"></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INBOX -->
+    <section class="view" id="v-inbox">
+      <div class="inbox-top">
+        <p style="color:var(--muted);max-width:620px">Your agents handled everything routine. These are the few calls where your eyes on the shelf make the difference. Each one explains what was noticed and why.</p>
+        <div class="progress"><span id="prog-txt">0 of 5 done</span><div class="meter"><span id="prog-bar" style="width:0%"></span></div></div>
+      </div>
+      <div class="decisions" id="decisions"></div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="view" id="v-review">
+      <div class="types" id="types"></div>
+      <div class="card">
+        <div class="toolbar">
+          <input id="rq" placeholder="Search items, e.g. avocados" aria-label="Search items">
+          <select id="rdept" aria-label="Department"><option value="all">All departments</option></select>
+          <span class="cnt" id="rcnt"></span>
+        </div>
+        <div class="tw"><table class="otable">
+          <thead><tr><th>Item</th><th>Department</th><th>Agent decision</th><th class="num">Order</th><th>Why</th><th>Confidence</th></tr></thead>
+          <tbody id="rbody"></tbody>
+        </table></div>
+        <div class="pager"><span id="rpage"></span><div style="display:flex;gap:8px"><button class="btn" data-page="-1">Previous</button><button class="btn" data-page="1">Next</button></div></div>
+      </div>
+      <p style="color:var(--faint);font-size:12.5px;margin-top:12px">Click any row to spot-check the forecast, stock and the checks it passed.</p>
+    </section>
+
+    <!-- CATALOG -->
+    <section class="view" id="v-catalog">
+      <div class="tiles">
+        <div class="tile"><div class="l"><i class="ti ti-file-import" aria-hidden="true"></i>Supplier listings</div><div class="v">2,341</div><div class="d neutral">From 6 suppliers</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-box" aria-hidden="true"></i>Products after cleanup</div><div class="v">1,806</div><div class="d neutral">One record per real product</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-wand" aria-hidden="true"></i>Auto-fixed this week</div><div class="v">146</div><div class="d">Duplicates merged, units fixed</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-help-circle" aria-hidden="true"></i>Need your review</div><div class="v" id="cat-need">5</div><div class="d neutral">Unsure matches only</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><div><h3>Unsure matches</h3><p>Strong matches merge automatically and weak ones stay separate. Only the unsure middle comes here, with the catalog agent's recommendation.</p></div></div>
+        <div class="tw"><table class="otable">
+          <thead><tr><th>Supplier listings</th><th>Product</th><th>Match confidence</th><th>Agent recommends</th><th></th></tr></thead>
+          <tbody id="cbody"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- OBSERVABILITY -->
+    <section class="view" id="v-obs">
+      <div class="tiles">
+        <div class="tile"><div class="l"><i class="ti ti-player-play" aria-hidden="true"></i>Today's pipeline run</div><div class="v">4m 56s</div><div class="d">All 10 stages passed · 6:05 AM</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-sparkles" aria-hidden="true"></i>Items the LLM touched</div><div class="v">10 <span style="font-size:16px;color:var(--faint);font-family:Inter">/ 1,284</span></div><div class="d neutral">0.8% · everything else is ML + rules</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-coin" aria-hidden="true"></i>LLM cost today</div><div class="v">$0.41</div><div class="d neutral">78.4k tokens · 10 agent runs</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-shield-check" aria-hidden="true"></i>Guardrail interventions</div><div class="v">3</div><div class="d">0 unsafe orders shipped</div></div>
+      </div>
+      <div class="cols">
+        <div style="display:grid;gap:18px;align-content:start">
+          <div class="card">
+            <div class="card-h"><div><h3>Pipeline run · Thu 6:00 AM</h3><p>Every stage, how long it took, and who did the work</p></div>
+              <div class="legend" style="margin:0"><span><i class="k-det" style="height:8px"></i>Rules / math</span><span><i class="k-ml" style="height:8px"></i>ML model</span><span><i class="k-llm" style="height:8px"></i>LLM agent</span></div></div>
+            <div class="card-b"><div class="gantt" id="gantt"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><div><h3>Agent traces</h3><p>Every LLM run, step by step · click a run to open its trace</p></div></div>
+            <div class="tw"><table class="otable">
+              <thead><tr><th>Run</th><th>Agent</th><th class="num">Steps</th><th class="num">Tokens</th><th class="num">Cost</th><th class="num">Latency</th><th>Outcome</th></tr></thead>
+              <tbody id="tbody"></tbody>
+            </table></div>
+          </div>
+        </div>
+        <div style="display:grid;gap:18px;align-content:start">
+          <div class="card">
+            <div class="card-h"><div><h3>Forecast model health</h3><p>LightGBM quantile model · v0.3 · retrained Sun</p></div></div>
+            <div class="card-b">
+              <div class="chart-wrap" id="wape"></div>
+              <div class="legend"><span><i style="background:var(--brand-2)"></i>Model error (WAPE)</span><span><i style="background:var(--base)"></i>Simple-rule baseline</span></div>
+              <div style="margin-top:18px;font-size:13.5px;display:flex;justify-content:space-between"><b style="font-weight:500">80% range coverage</b><span class="mono">81.2%</span></div>
+              <div class="cov"><span style="width:81.2%"></span><i style="left:80%"></i><em style="left:80%">target 80%</em></div>
+              <table class="otable" style="font-size:13px"><thead><tr><th>Input drift</th><th class="num">PSI</th><th>Status</th></tr></thead><tbody id="drift"></tbody></table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h"><div><h3>Guardrails & human feedback</h3><p>Where the system stopped itself, and where people disagreed</p></div></div>
+            <div class="card-b"><ul class="events" id="events"></ul></div>
+          </div>
+        </div>
+      </div>
+      <p style="color:var(--faint);font-size:12.5px;margin-top:14px">Traces stored in Langfuse · model runs tracked in MLflow · evals run nightly against the synthetic answer key.</p>
+    </section>
+
+    <!-- ORDERS -->
+    <section class="view" id="v-orders">
+      <div class="card">
+        <div class="card-h"><div><h3>Today's orders</h3><p>Prepared by the ordering agent · delivery Friday morning · click a department to see every item</p></div></div>
+        <div class="tw"><table class="otable">
+          <thead><tr><th>Department</th><th class="num">Items</th><th class="num">Auto-approved</th><th class="num">Order value</th><th>Status</th></tr></thead>
+          <tbody id="obody"></tbody>
+        </table></div>
+        <div class="send-bar"><span id="send-note" style="color:var(--muted);font-size:13.5px"></span><button class="btn pri" id="sendAll"><i class="ti ti-send" aria-hidden="true"></i>Send all orders to suppliers</button></div>
+      </div>
+    </section>
+
+    <!-- IMPACT -->
+    <section class="view" id="v-impact">
+      <div class="big-stats">
+        <div class="tile"><div class="l"><i class="ti ti-trash-off" aria-hidden="true"></i>Less food wasted</div><div class="v">38%</div><div class="d neutral">Since FreshPilot went live</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-scale" aria-hidden="true"></i>Food saved</div><div class="v">12,400 lb</div><div class="d neutral">≈ 10,300 meals</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-coin" aria-hidden="true"></i>Margin added</div><div class="v">+2.3 pts</div><div class="d neutral">Fresh departments</div></div>
+        <div class="tile"><div class="l"><i class="ti ti-cloud" aria-hidden="true"></i>Emissions avoided</div><div class="v">9.8 t</div><div class="d neutral">CO₂-equivalent</div></div>
+      </div>
+      <div class="cols">
+        <div class="card">
+          <div class="card-h"><div><h3>Waste rate by department</h3><p>Share of fresh product thrown away · 4 weeks before vs 4 weeks after</p></div></div>
+          <div class="card-b">
+            <div class="bars" id="bars"></div>
+            <div class="legend" style="margin-top:14px"><span><i style="background:var(--base);height:8px"></i>Before FreshPilot</span><span><i style="background:var(--brand-2);height:8px"></i>With FreshPilot</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div><h3>How it gets there</h3><p>Three things change for the store team</p></div></div>
+          <div class="card-b"><div class="story" style="grid-template-columns:1fr">
+            <div class="s"><i class="ti ti-crystal-ball" aria-hidden="true"></i><b>Orders match real demand</b><p>Forecasts plan for the likely range of sales, not a single guess, and weigh the cost of waste against the cost of an empty shelf for every item.</p></div>
+            <div class="s"><i class="ti ti-eye-search" aria-hidden="true"></i><b>Problems are caught before they cost money</b><p>Agents spot shelves that are probably empty, bad deliveries, and messy item data, and flag them the same day.</p></div>
+            <div class="s"><i class="ti ti-user-check" aria-hidden="true"></i><b>People decide what matters</b><p>Routine orders go through automatically. Managers see only a handful of calls a day, each with a clear reason.</p></div>
+          </div></div>
+        </div>
+      </div>
+      <p style="color:var(--faint);font-size:12.5px;margin-top:14px">Measured on 8 weeks of simulated store data, compared with a simple rule (order last week's sales minus stock on hand).</p>
+    </section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Ask FreshPilot">
+  <div class="dr-h"><div class="mark"><i class="ti ti-sparkles" aria-hidden="true"></i></div><div><b>FreshPilot</b><small><span class="live" style="background:var(--brand-2)"></span>Knows your store's orders, sales and shelves</small></div><button class="x" id="closeDr" aria-label="Close"><i class="ti ti-x"></i></button></div>
+  <div class="msgs" id="msgs"></div>
+  <div class="sugg" id="sugg"></div>
+  <form class="composer" id="composer"><input id="q" placeholder="Ask about any item, order or department…" autocomplete="off"><button aria-label="Send"><i class="ti ti-arrow-up"></i></button></form>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const DEPTS=[
+ {n:"Produce",ic:"ti-carrot",t:"brand",items:412,auto:409,val:9840,health:94,flags:3},
+ {n:"Meat & Seafood",ic:"ti-meat",t:"tomato",items:186,auto:185,val:14210,health:96,flags:1},
+ {n:"Bakery",ic:"ti-bread",t:"gold",items:94,auto:93,val:2260,health:91,flags:1},
+ {n:"Deli",ic:"ti-cheese",t:"sky",items:241,auto:241,val:6120,health:98,flags:0},
+ {n:"Dairy & Eggs",ic:"ti-egg",t:"plum",items:351,auto:351,val:8930,health:99,flags:0}
+];
+const TINT={brand:["var(--brand-soft)","var(--brand-ink)"],tomato:["var(--tomato-soft)","var(--tomato-ink)"],gold:["var(--gold-soft)","var(--gold-ink)"],sky:["var(--sky-soft)","var(--sky-ink)"],plum:["var(--plum-soft)","var(--plum)"]};
+const DEC=[
+ {id:"straw",name:"Strawberries, 1 lb",dept:"Produce",ic:"ti-cherry",t:"tomato",tag:["Shelf likely empty","c-warn"],
+  noticed:"The system says there are 30 lb on the shelf, but strawberries haven't sold in 3 days. They usually sell about 15 lb a day, so the shelf is most likely empty or the berries went bad.",
+  reasons:[["ti-chart-dots","No sales for 3 days, which is very unusual for this item"],["ti-calendar-event","Berry promotion starts Friday, so demand will jump"],["ti-sun","Warm weekend ahead, which lifts berry sales"]],
+  cases:6,pack:8,unit:"lb",pre:"Do a quick shelf check first. If berries are there, order 3 cases instead.",impact:"Protects about $310 in sales",conf:3,
+  range:[30,45,65],target:50,book:30,est:2,ask:"Why order more strawberries?"},
+ {id:"cil",name:"Cilantro, bunch",dept:"Produce",ic:"ti-leaf",t:"brand",tag:["Shelf likely empty","c-warn"],
+  noticed:"Records show 40 bunches in stock, but none have sold since Tuesday. Cilantro normally sells about 24 a day, so the last delivery was probably spoiled or never put out.",
+  reasons:[["ti-chart-dots","Zero sales for 2 days, normally sells every day"],["ti-clock","Last delivery is past its 5-day shelf life"],["ti-alert-circle","No waste has been recorded for 9 days, which is unusual"]],
+  cases:1,pack:30,unit:"bunches",pre:"Check the shelf and the back room before approving.",impact:"Protects about $95 in sales",conf:3,
+  range:[18,26,36],target:28,book:40,est:4,ask:"Why is cilantro flagged?"},
+ {id:"chk",name:"Chicken thighs, bone-in",dept:"Meat & Seafood",ic:"ti-meat",t:"tomato",tag:["Cut from whole birds","c-gold"],
+  noticed:"Thighs are on promotion this weekend, but the butcher cuts them from whole chickens. To cover thigh demand without running short on breasts and wings, the whole-bird order needs to go up.",
+  reasons:[["ti-calendar-event","Thigh promotion Saturday to Monday"],["ti-arrows-split-2","Each whole bird yields 2 thighs, 2 breasts, 2 wings"],["ti-chart-bar","Breast demand stays normal, so extra breasts go to the hot case"]],
+  cases:9,pack:12,unit:"birds",pre:null,impact:"Adds about $640 in weekend sales",conf:2,
+  range:[84,96,118],target:104,book:0,est:0,ask:"Why order more whole chickens for a thigh promo?"},
+ {id:"sour",name:"Sourdough loaves",dept:"Bakery",ic:"ti-bread",t:"gold",tag:["Bake plan change","c-sky"],
+  noticed:"Heavy rain is forecast for Saturday, and on rainy Saturdays this store sells about 20% fewer artisan loaves. The agent suggests baking 18 fewer loaves.",
+  reasons:[["ti-cloud-rain","Heavy rain forecast Saturday morning"],["ti-history","Past rainy Saturdays sold 18–24% less bread"],["ti-trash","Unsold sourdough was the top bakery waste item last month"]],
+  cases:5,pack:12,unit:"loaves",pre:null,impact:"Avoids about $110 in waste",conf:2,
+  range:[48,60,72],target:60,book:0,est:0,ask:"Why bake less sourdough on Saturday?"},
+ {id:"rom",name:"Romaine hearts, 3 pack",dept:"Produce",ic:"ti-salad",t:"brand",tag:["Delivery quality issue","c-gold"],
+  noticed:"Waste on romaine tripled this week, all from Monday's delivery. Demand is normal, so the order is fine, but the supplier should hear about the quality.",
+  reasons:[["ti-trash","18% thrown away this week vs about 6% normally"],["ti-truck","All of it from one delivery on Monday"],["ti-chart-line","Customer demand is unchanged"]],
+  cases:3,pack:12,unit:"packs",pre:"The agent drafted a quality note to the supplier for you to send.",impact:"Recovers about $140 in credits",conf:3,
+  range:[40,52,66],target:57,book:22,est:16,ask:"What's going on with romaine?"}
+];
+const EXTRA={
+ straw:{hist:15,trend:1.25,phantom:3,tq:"P60",engine:24,fail:"Sales don't match stock",
+  drivers:[["Promo starts Fri",8.1],["Weekend",5.4],["7-day avg sales",3.2],["Temp 84°F",1.9],["Price change",-0.8]],
+  ev:["0 lb sold in 72 h vs 15.2 lb/day avg","P(3 zero days | stock real) < 0.1% (Poisson)","Last receipt 5 d ago · shelf life 4 d","Promo lift +28% Fri–Sun"]},
+ cil:{hist:24,trend:1,phantom:2,tq:"P55",engine:0,fail:"Sales don't match stock",
+  drivers:[["7-day avg sales",6.0],["Heritage month",2.4],["Day of week",1.2],["Price",-0.3]],
+  ev:["0 sold in 48 h vs 24/day avg","P(2 zero days | stock real) = 0.2%","Waste logged 0 for 9 d (expected ~2/d)"]},
+ chk:{hist:30,trend:1.35,tq:"P65",engine:108,fail:"Yield plan changes",
+  drivers:[["Thigh promo",14.2],["Weekend",6.1],["7-day avg sales",3.0],["Price",-1.1]],
+  ev:["Thigh promo lift +40% Sat–Mon","Yield: 1 bird → 2 thighs, 2 breasts, 2 wings","Breast surplus ~38 → hot-case plan"]},
+ sour:{hist:26,trend:.8,tq:"P50",engine:60,fail:"Bake plan changes",
+  drivers:[["Rain Saturday",-9.4],["7-day avg sales",4.1],["Weekend",3.8],["Season",1.0]],
+  ev:["Rain Sat 80% · rainy Sat sales −18 to −24%","Usual Saturday bake: 78 loaves","#1 bakery waste item, last 4 weeks"]},
+ rom:{hist:17,trend:1,tq:"P50",target:52,engine:36,fail:"Waste 3× normal",
+  drivers:[["7-day avg sales",4.4],["Weekend",2.1],["Temp 84°F",1.1],["Recent waste",-1.7]],
+  ev:["Waste 18% this week vs 6% trailing avg","All waste from lot received Mon","Demand unchanged vs last 4 weeks"]}
+};
+DEC.forEach(d=>Object.assign(d,EXTRA[d.id]));
+const FEED=[
+ ["ti-cherry","tomato","Shelf check agent","Strawberries may be out of stock. Sent to Maria for a quick shelf check."],
+ ["ti-check","brand","Ordering agent","Approved 409 of 412 produce orders automatically."],
+ ["ti-list-check","sky","Catalog agent","Merged 3 duplicate banana listings from two suppliers into one item."],
+ ["ti-cloud-rain","sky","Bakery agent","Rain forecast Saturday. Suggested a smaller sourdough bake."],
+ ["ti-truck","gold","Shelf check agent","Romaine from Monday's delivery is spoiling fast. Drafted a supplier note."],
+ ["ti-meat","tomato","Ordering agent","Thigh promotion this weekend. Raised the whole-chicken order to match."],
+ ["ti-leaf","brand","Shelf check agent","Cilantro hasn't sold since Tuesday. Flagged a possible empty shelf."],
+ ["ti-egg","plum","Ordering agent","Approved all 351 dairy and egg orders automatically."],
+ ["ti-cheese","sky","Ordering agent","Approved all 241 deli orders automatically."],
+ ["ti-apple","brand","Catalog agent","Fixed a unit mix-up: Honeycrisp was listed by the case and by the pound."]
+];
+const ANSWERS=[
+ {k:["strawberr"],a:`<p>Two things are happening with strawberries:</p><ul><li>The system shows 30 lb on hand, but nothing has sold in 3 days. They usually sell about 15 lb a day, so the shelf is very likely empty.</li><li>A berry promotion starts Friday and the weekend will be warm, so demand will be higher than usual.</li></ul><p style="margin-top:6px">That's why I'm suggesting 6 cases (48 lb) after a quick shelf check. If berries are there, 3 cases is enough.</p>`,s:"Sales history, inventory, promotions calendar, weather"},
+ {k:["cilantro"],a:`<p>Cilantro shows 40 bunches in stock but hasn't sold since Tuesday. It normally sells about 24 a day, and the last delivery is past its 5-day shelf life. Most likely it spoiled and was never recorded as waste. I suggest checking the shelf, then ordering 1 case of 30.</p>`,s:"Sales history, deliveries, waste log"},
+ {k:["chicken","thigh"],a:`<p>Thighs are on promotion, but the butcher cuts them from whole birds. Each bird gives 2 thighs, 2 breasts and 2 wings. To have enough thighs for the weekend, the order goes up to 9 cases of whole birds. The extra breasts are planned for the hot case, so they won't go to waste.</p>`,s:"Promotions calendar, cutting yields, sales history"},
+ {k:["sourdough","bread","bake"],a:`<p>Heavy rain is forecast Saturday. On past rainy Saturdays, this store sold 18–24% fewer artisan loaves, and sourdough was the top bakery waste item last month. Baking 60 instead of 78 loaves keeps shelves full while avoiding about $110 in waste.</p>`,s:"Weather forecast, bakery sales history, waste log"},
+ {k:["romaine","lettuce"],a:`<p>Romaine waste jumped to 18% this week from about 6%, and all of it came from Monday's delivery. Demand hasn't changed, so the order stays the same. I drafted a quality note to the supplier so you can request a credit.</p>`,s:"Waste log, deliveries"},
+ {k:["waste","throw"],a:`<p>Produce waste this week is down 38% compared with before FreshPilot. The biggest remaining sources are:</p><ul><li>Romaine from Monday's bad delivery</li><li>Soft fruit on slow weekdays</li><li>Artisan bread on rainy days</li></ul><p style="margin-top:6px">Two of these have a suggested fix waiting in Decisions.</p>`,s:"Waste log, sales history"},
+ {k:["doing","morning","did","agents"],a:()=>`<p>Here's today so far:</p><ul><li><b>Ordering agent</b> prepared 1,284 orders and approved 1,279 automatically.</li><li><b>Shelf check agent</b> found 2 shelves that are likely empty and 1 bad delivery.</li><li><b>Catalog agent</b> cleaned up duplicate listings, including 3 banana items that were splitting sales history.</li></ul>`+pendingLine(),s:"Agent activity log"},
+ {k:["shelf check","check"],a:`<p>Two items need a quick shelf check before the 6 PM order lock:</p><ul><li><b>Strawberries</b>, 30 lb on record, no sales in 3 days</li><li><b>Cilantro</b>, 40 bunches on record, no sales since Tuesday</li></ul>`,s:"Inventory, sales history"}
+];
+function pendingLine(){const n=DEC.filter(d=>state[d.id].status==="open").length;return `<p style="margin-top:6px">${n?`${n} decision${n>1?"s are":" is"} waiting for you. ${n>1?"They":"It"} should take a few minutes.`:"All decisions are done. Orders are ready to send."}</p>`}
+function rng(seed){return()=>{seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296}}
+const NAMES={
+ "Produce":["Gala apples","Honeycrisp apples","Bananas","Avocados Hass","Blueberries","Raspberries","Red grapes","Green grapes","Lemons","Limes","Navel oranges","Mandarins","Pineapple","Mango","Watermelon","Cantaloupe","Iceberg lettuce","Spring mix","Baby spinach","Kale","Parsley","Basil","Roma tomatoes","Vine tomatoes","Cherry tomatoes","Cucumbers","Red bell peppers","Green bell peppers","Jalapeños","Yellow onions","Red onions","Garlic","Russet potatoes","Sweet potatoes","Carrots","Broccoli","Cauliflower","Zucchini","White mushrooms","Celery","Green beans","Asparagus","Sweet corn","Peaches","Pears","Plums","Kiwi","Ginger"],
+ "Meat & Seafood":["Chicken breast","Chicken wings","Chicken drumsticks","Ground beef 80/20","Ground beef 93/7","Ribeye steak","Sirloin steak","Pork chops","Pork tenderloin","Bacon","Italian sausage","Ground turkey","Salmon fillet","Shrimp 21/25","Tilapia","Cod fillet","Lamb chops","Beef stew meat","Brisket","Short ribs"],
+ "Bakery":["Baguette","Ciabatta","Whole wheat bread","Croissants","Bagels","Blueberry muffins","Chocolate muffins","Dinner rolls","Chocolate chip cookies","Brownies","Cinnamon rolls","Cupcakes","Apple pie","Rye bread","Brioche"],
+ "Deli":["Turkey breast","Honey ham","Roast beef","Salami","Provolone","Swiss cheese","Cheddar","Pepper jack","Chicken salad","Potato salad","Pasta salad","Hummus","Rotisserie chicken","California roll","Turkey club sandwich","Tomato soup","Mac and cheese","Olives","Pickles","Fried chicken"],
+ "Dairy & Eggs":["Whole milk","2% milk","Skim milk","Oat milk","Almond milk","Large eggs","Brown eggs","Greek yogurt","Vanilla yogurt","Salted butter","Unsalted butter","Heavy cream","Half and half","Sour cream","Cream cheese","Cottage cheese","Shredded mozzarella","String cheese","Orange juice","Coffee creamer"]};
+const VARS={
+ "Produce":["loose","1 lb","2 lb bag","3 lb bag","5 lb bag","organic","organic 1 lb","value pack","family size","single"],
+ "Meat & Seafood":["1 lb","2 lb","family pack","value pack","organic","boneless","bone-in","marinated","thin cut","thick cut"],
+ "Bakery":["single","4 ct","6 ct","12 ct","mini","large","seeded"],
+ "Deli":["sliced ½ lb","sliced 1 lb","8 oz","16 oz","family size","single","small","large","party tray","low sodium","spicy","classic","premium"],
+ "Dairy & Eggs":["half gallon","gallon","quart","12 ct","18 ct","32 oz","16 oz","8 oz","organic","lactose free","store brand","family size","single","value","plain","light","original","lite"]};
+const ADJ=[["Promo starts Fri","+",20,60],["Warm weekend","+",8,20],["Rain Saturday","-",10,25],["Holiday weekend","+",15,35],["Price drop","+",10,25],["Slow week after promo","-",10,20]];
+const NORM=["Demand steady · usual order","In line with the last 4 weeks","Normal weekly pattern"];
+const FIX=["Merged duplicate supplier listing","Fixed unit mix-up (case vs lb)","Linked new supplier code to this item","Corrected pack size 12 → 6"];
+const TYPES=[
+ {k:"all",l:"All items",ic:"ti-list",c:"",d:"Everything the agents looked at today"},
+ {k:"needs",l:"Needs you",ic:"ti-hand-stop",c:"c-warn",d:"Shelf check or a judgment call"},
+ {k:"adjusted",l:"Adjusted",ic:"ti-adjustments",c:"c-gold",d:"More or less for promo, weather, holiday"},
+ {k:"normal",l:"Usual order",ic:"ti-check",c:"c-ok",d:"Demand steady, usual amount"},
+ {k:"noorder",l:"No order needed",ic:"ti-package",c:"c-sky",d:"Enough on the shelf until next delivery"},
+ {k:"datafix",l:"Data fixed",ic:"ti-tags",c:"c-plum",d:"Duplicate or wrong listing cleaned up"}];
+const TORD={needs:0,adjusted:1,datafix:2,noorder:3,normal:4};
+const ALL=[];
+(function(){const r=rng(42);let id=1001;const pool=[];
+ DEPTS.forEach(d=>{const decs=DEC.filter(x=>x.dept===d.n);const names=[];
+   NAMES[d.n].forEach(b=>VARS[d.n].forEach(v=>names.push(b+", "+v)));
+   for(let i=names.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
+   decs.forEach(x=>ALL.push({id:"PRD-"+(id++),dept:d.n,name:x.name,type:"needs",dec:x.id,p:x.range,shelf:x.est,cases:x.cases,pack:x.pack,reason:x.tag[0],conf:x.conf===3?"High":"Medium",fail:x.fail}));
+   for(let i=0;i<d.items-decs.length;i++)pool.push({dept:d.n,name:names[i]})});
+ const idx=pool.map((_,i)=>i);for(let i=idx.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]]}
+ idx.forEach((pi,k)=>pool[pi].type=k<85?"adjusted":k<120?"noorder":k<129?"datafix":"normal");
+ pool.forEach(it=>{const pack=[6,8,12,24][Math.floor(r()*4)],p50=(2+Math.floor(r()*30))*3;let p=[Math.round(p50*.72),p50,Math.round(p50*1.35)],shelf=Math.floor(r()*p50*.5),cases,reason,conf="High";
+   if(it.type==="adjusted"){const a=ADJ[Math.floor(r()*ADJ.length)],pct=a[2]+Math.floor(r()*(a[3]-a[2])),f=a[1]==="+"?1+pct/100:1-pct/100;
+     p=p.map(v=>Math.round(v*f));cases=Math.max(1,Math.ceil((p[1]*1.05-shelf)/pack));reason=`${a[0]} · ordered ${pct}% ${a[1]==="+"?"more":"less"} than usual`;conf=r()<.7?"High":"Medium"}
+   else if(it.type==="noorder"){shelf=Math.round(p[2]*1.1);cases=0;reason=`${shelf} on the shelf covers demand to next delivery`}
+   else{cases=Math.max(1,Math.ceil((p[1]*1.05-shelf)/pack));reason=it.type==="datafix"?FIX[Math.floor(r()*FIX.length)]:NORM[Math.floor(r()*NORM.length)]}
+   ALL.push(Object.assign(it,{id:"PRD-"+(id++),p,shelf,cases,pack,reason,conf}))});
+ ALL.sort((a,b)=>TORD[a.type]-TORD[b.type]||a.dept.localeCompare(b.dept)||a.name.localeCompare(b.name));
+})();
+const CATALOG=[
+ {a:"BLUEBRY PT 12CT",b:"Blueberries, pint",v:"Supplier A · Supplier C",m:"Blueberries, 1 pint",conf:.74,rec:"Merge",why:"Same product and pack. \"12CT\" is the case count, not the berry count."},
+ {a:"TOM ROMA 25LB CS",b:"Tomatoes, roma – ea",v:"Supplier A · Supplier B",m:"Roma tomatoes",conf:.81,rec:"Merge",why:"Same variety. A 25 lb case is about 100 tomatoes, so the units convert cleanly."},
+ {a:"LETT ROM HRT 3PK",b:"Romaine lettuce, whole head",v:"Supplier B · Supplier C",m:"Romaine hearts, 3 pack",conf:.68,rec:"Keep separate",why:"Hearts and whole heads are different products with different demand and shelf life."},
+ {a:"APPLE HCRSP 3LB",b:"Honeycrisp apples – loose",v:"Supplier A · Supplier C",m:"Honeycrisp apples",conf:.71,rec:"Keep separate",why:"Bagged and loose sell at different prices to different shoppers, so keep their sales history apart."},
+ {a:"CILANTRO BNCH 30",b:"Cilantro, bunch",v:"Supplier B · Supplier C",m:"Cilantro, bunch",conf:.88,rec:"Merge",why:"Same item. 30 is the number of bunches per case."}];
+const rv={type:"all",dept:"all",q:"",page:0,open:null},PER=25;
+
+function techPanel(d){
+ const r=rng(d.id.length*97+d.hist),h=[];
+ for(let i=0;i<21;i++){const dow=[.9,.85,.9,1,1.1,1.3,1.2][i%7];let v=d.hist*dow*(.85+r()*.3);if(d.phantom&&i>=21-d.phantom)v=0;h.push(Math.round(v))}
+ const f=[];for(let i=0;i<7;i++){const dow=[1,1.1,1.3,1.2,.9,.85,.9][i],k=dow*(i>=1&&i<=3?d.trend:1);f.push([d.hist*k*.72,d.hist*k,d.hist*k*1.38])}
+ const W=520,H=170,L=30,R=8,T=12,B=22,n=28,max=Math.max(...h,...f.map(x=>x[2]))*1.12;
+ const x=i=>L+(W-L-R)*i/(n-1),y=v=>T+(H-T-B)*(1-v/max);
+ let g="";[0,.5,1].forEach(t=>{const v=Math.round(max*t);g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--faint)">${v}</text>`});
+ const band=f.map((p,i)=>`${x(21+i)},${y(p[2])}`).join(" ")+" "+f.map((p,i)=>`${x(21+i)},${y(p[0])}`).reverse().join(" ");
+ const zero=d.phantom?`<rect x="${x(21-d.phantom-.5)}" y="${T}" width="${x(20.5)-x(21-d.phantom-.5)}" height="${H-T-B}" fill="var(--tomato-soft)"/><text x="${(x(21-d.phantom-.5)+x(20.5))/2}" y="${T+12}" text-anchor="middle" font-size="10" fill="var(--tomato)">no sales</text>`:"";
+ const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily sales for the last 21 days and forecast range for the next 7 days">${g}${zero}
+  <polygon points="${band}" fill="var(--brand-soft)"/>
+  <polyline points="${f.map((p,i)=>`${x(21+i)},${y(p[1])}`).join(" ")}" fill="none" stroke="var(--brand-2)" stroke-width="2" stroke-linejoin="round"/>
+  <polyline points="${h.map((v,i)=>`${x(i)},${y(v)}`).join(" ")}" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>
+  <line x1="${x(20.5)}" x2="${x(20.5)}" y1="${T}" y2="${H-B}" stroke="var(--faint)" stroke-dasharray="3 3"/>
+  <text x="${x(20.5)+4}" y="${H-B-5}" font-size="10" fill="var(--faint)">today</text>
+  <text x="${L}" y="${H-5}" font-size="10" fill="var(--faint)">−21 d</text><text x="${W-R}" y="${H-5}" text-anchor="end" font-size="10" fill="var(--faint)">+7 d</text></svg>`;
+ const m=Math.max(...d.drivers.map(v=>Math.abs(v[1])));
+ const drv=d.drivers.map(([nm,v])=>{const w=Math.abs(v)/m*50;return `<div class="drv"><span>${nm}</span><div class="dbar"><span style="left:${v>=0?50:50-w}%;width:${w}%;background:${v>=0?"var(--brand-2)":"var(--tomato)"}"></span></div><span class="mono" style="text-align:right">${v>0?"+":""}${v}</span></div>`}).join("");
+ const tgt=d.target;
+ return `<div class="math" id="m-${d.id}"><div class="tech">
+  <div class="tbox"><h4>Daily sales · 7-day forecast (${d.unit})</h4><div class="mini">${svg}</div>
+   <div class="legend"><span><i style="background:var(--ink)"></i>Actual</span><span><i style="background:var(--brand-2)"></i>Forecast P50</span><span><i style="background:var(--brand-soft);height:8px"></i>P10–P90</span></div></div>
+  <div style="display:grid;gap:14px;align-content:start">
+   <div class="tbox"><h4>Forecast drivers (SHAP)</h4>${drv}</div>
+   <div class="tbox"><h4>Evidence</h4><ul class="evid">${d.ev.map(e=>`<li><i class="ti ti-point-filled" aria-hidden="true"></i>${e}</li>`).join("")}</ul></div>
+  </div>
+  <div class="tbox" style="grid-column:1/-1"><h4>Order math · computed by the engine, not the LLM</h4><div class="omath">
+   <div><small>Cycle forecast P10 / P50 / P90</small><b class="mono">${d.range.join(" / ")}</b></div>
+   <div><small>Target (newsvendor)</small><b class="mono">${d.tq} → ${tgt}</b></div>
+   <div><small>On hand: system / estimated</small><b class="mono">${d.book} / ${d.est}</b></div>
+   <div><small>Engine order (system stock)</small><b class="mono">${d.engine} ${d.unit}</b></div>
+   <div class="final"><small>Recommended</small><b class="mono">${d.cases*d.pack} ${d.unit} · ${d.cases} cs</b></div>
+  </div></div>
+ </div></div>`;
+}
+
+function typeChip(it){if(it.type==="needs"){const s=state[it.dec].status;return s==="open"?`<span class="chip c-warn"><i class="ti ti-hand-stop" aria-hidden="true"></i>Needs you</span>`:`<span class="chip c-ok"><i class="ti ti-user-check" aria-hidden="true"></i>You ${s}</span>`}
+ const t=TYPES.find(t=>t.k===it.type);return `<span class="chip ${t.c}"><i class="ti ${t.ic}" aria-hidden="true"></i>${t.l}</span>`}
+function filtered(){const q=rv.q.toLowerCase();return ALL.filter(it=>(rv.type==="all"||it.type===rv.type)&&(rv.dept==="all"||it.dept===rv.dept)&&(!q||it.name.toLowerCase().includes(q)||it.id.toLowerCase().includes(q)))}
+function renderReview(){
+ const base=ALL.filter(it=>rv.dept==="all"||it.dept===rv.dept);
+ $("#types").innerHTML=TYPES.map(t=>{const c=t.k==="all"?base.length:base.filter(i=>i.type===t.k).length;
+  return `<button class="type ${rv.type===t.k?"on":""}" data-type="${t.k}"><span class="t">${t.c?`<span class="chip ${t.c}" style="padding:2px 6px"><i class="ti ${t.ic}" aria-hidden="true"></i></span>`:`<i class="ti ${t.ic}" aria-hidden="true"></i>`}${t.l}</span><span class="n">${c.toLocaleString()}</span><p>${t.d}</p></button>`}).join("");
+ const list=filtered(),pages=Math.max(1,Math.ceil(list.length/PER));rv.page=Math.min(rv.page,pages-1);
+ const rows=list.slice(rv.page*PER,rv.page*PER+PER);
+ $("#rcnt").textContent=`${list.length.toLocaleString()} items`;
+ $("#rpage").textContent=list.length?`Showing ${rv.page*PER+1}–${rv.page*PER+rows.length} of ${list.length.toLocaleString()}`:"No items match";
+ $("#rbody").innerHTML=rows.length?rows.map(it=>{const open=rv.open===it.id;
+  let tr=`<tr class="clickable ${open?"open":""}" data-rid="${it.id}"><td><div style="display:flex;gap:8px;align-items:flex-start"><i class="ti ti-chevron-right" aria-hidden="true" style="margin-top:3px"></i><div><span style="font-weight:500">${it.name}</span><span class="idl">${it.id}</span></div></div></td><td>${it.dept}</td><td>${typeChip(it)}</td><td class="num">${it.cases?`${it.cases} cs`:"—"}</td><td class="why">${it.reason}</td><td>${it.conf}</td></tr>`;
+  if(open){const pass=["Sales match stock","Waste normal","Order in usual range",it.type==="datafix"?"Item data fixed":"Item data clean"];
+   const checks=it.type==="needs"?`<span class="chip c-warn"><i class="ti ti-alert-triangle" aria-hidden="true"></i>${it.fail}</span>`+pass.slice(1,2).map(c=>`<span class="chip c-ok"><i class="ti ti-check" aria-hidden="true"></i>${c}</span>`).join(""):pass.map(c=>`<span class="chip c-ok"><i class="ti ti-check" aria-hidden="true"></i>${c}</span>`).join("");
+   tr+=`<tr class="row-exp"><td colspan="6"><div class="spot">
+    <div><small>Forecast P10 / P50 / P90</small><b class="mono">${it.p.join(" / ")}</b></div>
+    <div><small>On shelf (est.)</small><b class="mono">${it.shelf}</b></div>
+    <div><small>Order</small><b class="mono">${it.cases} cs × ${it.pack} = ${it.cases*it.pack}</b></div>
+    <div><small>Checks</small><div class="checks">${checks}</div></div>
+    ${it.type==="needs"?`<button class="btn pri" data-opendec="${it.dec}">Open decision</button>`:""}</div></td></tr>`}
+  return tr}).join(""):`<tr><td colspan="6" style="text-align:center;color:var(--faint);padding:30px">No items match these filters.</td></tr>`;
+ $$("[data-page]")[0].disabled=rv.page===0;$$("[data-page]")[1].disabled=rv.page>=pages-1;
+}
+function renderCatalog(){
+ const pend=CATALOG.filter(c=>!c.done).length;$("#cat-count").textContent=pend||"";$("#cat-need").textContent=pend;
+ $("#cbody").innerHTML=CATALOG.map((c,k)=>`<tr>
+  <td><span class="srcl">${c.a}</span><span class="srcl">${c.b}</span><span style="font-size:12px;color:var(--faint)">${c.v}</span></td>
+  <td style="font-weight:500">${c.m}</td>
+  <td><div class="cbar"><div class="meter"><span style="width:${c.conf*100}%;background:${c.conf>=.8?"var(--brand-2)":"var(--gold)"}"></span></div><span class="mono">${Math.round(c.conf*100)}%</span></div></td>
+  <td><span class="chip ${c.rec==="Merge"?"c-ok":"c-gold"}">${c.rec}</span><div class="why" style="margin-top:6px;max-width:340px">${c.why}</div></td>
+  <td>${c.done?`<span class="chip c-sky">${c.done}</span>`:`<div style="display:flex;gap:6px"><button class="btn pri" data-cat="${k}" data-act="Accepted" style="padding:6px 12px">Accept</button><button class="btn" data-cat="${k}" data-act="Rejected" style="padding:6px 12px">Reject</button></div>`}</td></tr>`).join("");
+}
+const PIPE=[["Ingest sales, receipts, waste","3.1M rows · 6 sources","det",0,42],["Catalog reconcile","146 fixes · 5 to review","det",42,48],["Catalog match review","5 unsure matches","llm",90,24],["Demand forecast","LightGBM · 1,284 × 7 quantiles","ml",114,38],["Conformal calibration","80% coverage check","ml",152,6],["Order engine","Newsvendor · 1,284 orders","det",158,9],["Exception checks","5 flagged","det",167,4],["Investigator agent","5 runs · 21 tool calls","llm",171,78],["Guardrail validation","3 interventions","det",249,3],["Narration + publish","10 explanations verified","llm",252,44]];
+function renderGantt(){const T=296;$("#gantt").innerHTML=PIPE.map(([n,sub,k,st,d])=>`<div class="grow"><div class="nm">${n}<small>${sub}</small></div><div class="gtrack"><span class="k-${k}" style="left:${st/T*100}%;width:${d/T*100}%" title="${n}: ${d}s"></span></div><span class="dur">${d}s</span></div>`).join("")}
+const RUNS=[];
+DEC.forEach((d,i)=>{const bad=d.id==="straw",num=d.id==="chk";
+ const steps=[["det","T","triage",`Exception detector: ${d.fail.toLowerCase()}`,12],["llm","A","investigate","Planned 4 tool calls",1380+i*40],
+  ["tool","·","tool",`<code class="mono">get_sales_history("${d.id}", days=21)</code>`,38],["tool","·","tool",`<code class="mono">get_inventory()</code> → system ${d.book}, est. ${d.est}`,21],
+  ["tool","·","tool",`<code class="mono">explain_forecast()</code> → top driver: ${d.drivers[0][0]}`,95],["tool","·","tool",`<code class="mono">simulate_order(on_hand=${d.est})</code> → ${d.cases*d.pack} ${d.unit}`,44]];
+ if(bad)steps.push(["bad","!","validate","Blocked: first proposal 80 lb is outside the policy band (≤ 60 lb) → re-ran <code class=\"mono\">simulate_order</code>",7]);
+ steps.push(["det","V","validate","Policy band OK · quantity came from the engine",6],["det","R","route",`Risk ${d.conf===3?"high":"medium"} → escalated to manager`,2]);
+ if(num)steps.push(["bad","!","verify","Narrative said 120 birds, engine says 108 → regenerated",5]);
+ steps.push(["llm","N","narrate",`Explanation generated · all numbers verified against source`,1050+i*30]);
+ const ms=steps.reduce((a,x)=>a+x[4],0),tok=5200+i*410;
+ RUNS.push({id:"run_"+(7101+i),item:d.name,agent:"Investigator",steps,tok,cost:tok*0.0000052,ms,out:bad||num?"Guardrail fired":"Escalated"})});
+CATALOG.forEach((c,i)=>{const bad=c.a.startsWith("LETT");
+ const steps=[["det","T","triage",`Match score ${Math.round(c.conf*100)}% · in review band`,8],["llm","A","investigate","Compared names, pack sizes and prices",880+i*50],
+  ["tool","·","tool",`<code class="mono">get_listing("${c.a}")</code>`,22],["tool","·","tool",`<code class="mono">convert_units()</code>`,9]];
+ if(bad)steps.push(["bad","!","validate","Merge rejected: hearts 3-pack vs whole head are different products",4]);
+ steps.push(["det","V","validate","Unit compatibility checked",4],["det","R","route","Sent to Catalog review",2]);
+ const ms=steps.reduce((a,x)=>a+x[4],0),tok=2100+i*230;
+ RUNS.push({id:"run_"+(7201+i),item:c.m,agent:"Catalog",steps,tok,cost:tok*0.0000052,ms,out:bad?"Guardrail fired":"To review"})});
+let openRun=null;
+function renderRuns(){$("#tbody").innerHTML=RUNS.map(r=>{let h=`<tr class="clickable ${openRun===r.id?"open":""}" data-run="${r.id}"><td><div style="display:flex;gap:8px;align-items:flex-start"><i class="ti ti-chevron-right" aria-hidden="true" style="margin-top:3px"></i><div><span style="font-weight:500">${r.item}</span><span class="idl">${r.id}</span></div></div></td><td>${r.agent}</td><td class="num">${r.steps.length}</td><td class="num">${r.tok.toLocaleString()}</td><td class="num">$${r.cost.toFixed(3)}</td><td class="num">${(r.ms/1000).toFixed(1)}s</td><td><span class="chip ${r.out==="Guardrail fired"?"c-gold":"c-ok"}">${r.out}</span></td></tr>`;
+ if(openRun===r.id)h+=`<tr class="row-exp"><td colspan="7"><ul class="steps">${r.steps.map(([k,l,n,t,ms])=>`<li><span class="sdot s-${k}">${l}</span><span><b class="mono" style="font-weight:500">${n}</b> — ${t}</span><time>${ms>=1000?(ms/1000).toFixed(1)+" s":ms+" ms"}</time></li>`).join("")}</ul></td></tr>`;return h}).join("")}
+function renderWape(){const m=[24.1,23.4,22.8,22.1,21.9,21.4,21.7,21.4],b=34.8,W=420,H=170,L=34,R=10,T=12,B=24,n=m.length,max=40;
+ const x=i=>L+(W-L-R)*i/(n-1),y=v=>T+(H-T-B)*(1-v/max);let g="";
+ [0,20,40].forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--faint)">${v}%</text>`);
+ m.forEach((v,i)=>g+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" font-size="10" fill="var(--faint)">W${i+1}</text>`);
+ $("#wape").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Forecast error fell from 24.1% to 21.4% over 8 weeks, versus 34.8% for the baseline">${g}
+  <line x1="${L}" x2="${W-R}" y1="${y(b)}" y2="${y(b)}" stroke="var(--base)" stroke-width="2" stroke-dasharray="5 4"/><text x="${W-R}" y="${y(b)-6}" text-anchor="end" font-size="11" fill="var(--muted)">baseline ${b}%</text>
+  <polyline points="${m.map((v,i)=>`${x(i)},${y(v)}`).join(" ")}" fill="none" stroke="var(--brand-2)" stroke-width="2" stroke-linejoin="round"/>
+  ${m.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="var(--panel)" stroke="var(--brand-2)" stroke-width="2"><title>Week ${i+1}: ${v}%</title></circle>`).join("")}
+  <text x="${x(n-1)}" y="${y(m[n-1])+18}" text-anchor="end" font-size="11.5" font-weight="600" fill="var(--ink)">${m[n-1]}%</text></svg>`;
+ $("#drift").innerHTML=[["Recent sales",0.03],["Price",0.05],["Promotions",0.08],["Temperature",0.19],["Item mix",0.04]].map(([f,v])=>`<tr><td>${f}</td><td class="num mono">${v.toFixed(2)}</td><td>${v<0.1?`<span class="chip c-ok"><i class="ti ti-check" aria-hidden="true"></i>Stable</span>`:`<span class="chip c-gold"><i class="ti ti-eye" aria-hidden="true"></i>Watch</span>`}</td></tr>`).join("");
+ $("#events").innerHTML=[
+  ["ti-shield-x","tomato","Order quantity blocked","Strawberries: agent proposed 80 lb, above the 60 lb policy band. Re-ran the engine, final 48 lb."],
+  ["ti-shield-x","tomato","Number check failed","Chicken thighs: explanation said 120 birds, engine said 108. Explanation regenerated."],
+  ["ti-shield-x","tomato","Catalog merge rejected","Romaine hearts vs whole heads: units incompatible, kept as separate products."],
+  ["ti-user-edit","gold","Manager overrides this week","4 of 31 decisions changed (13%). Most were bakery bake plans. Fed back into next retrain."],
+  ["ti-refresh","sky","Model retrained","Sunday 2:00 AM · error 21.4% vs 21.7% prior · promoted after passing evals."]].map(([ic,t,h,p])=>{const [bg,fg]=TINT[t==="tomato"?"tomato":t];return `<li><div class="ic" style="background:${bg};color:${fg}"><i class="ti ${ic}" aria-hidden="true"></i></div><div><b style="font-weight:500">${h}</b><p>${p}</p></div></li>`}).join("")}
+const SUGG=["What did the agents do this morning?","Which items need a shelf check?","Where is our waste coming from?","Why order more strawberries?"];
+
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+const state={};DEC.forEach(d=>state[d.id]={status:"open",cases:d.cases});
+let sent=false;
+
+function greet(){const h=new Date().getHours();$("#greet").textContent=(h<12?"Good morning":h<17?"Good afternoon":"Good evening")+", Maria"}
+function countdown(){const now=new Date(),c=new Date();c.setHours(18,0,0,0);let m=Math.round((c-now)/60000);
+  $("#countdown").textContent=sent?"Sent":m>0?`${Math.floor(m/60)}h ${m%60}m`:"6:00 PM"}
+
+function countUp(){ $$("[data-count]").forEach(el=>{const to=+el.dataset.count,dec=+(el.dataset.dec||0),pre=el.dataset.pre||"",suf=el.dataset.suf||"";
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;const t0=performance.now(),dur=reduce?0:1100;
+  const step=t=>{const p=dur?Math.min(1,(t-t0)/dur):1,e=1-Math.pow(1-p,3),v=to*e;
+    el.textContent=pre+(dec?v.toFixed(dec):Math.round(v).toLocaleString())+suf;if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)})}
+
+function renderDepts(){ $("#depts").innerHTML=DEPTS.map(d=>{const [bg,fg]=TINT[d.t];const open=d.n==="Produce"?DEC.filter(x=>x.dept==="Produce"&&state[x.id].status==="open").length:DEC.filter(x=>x.dept===d.n&&state[x.id].status==="open").length;
+  return `<div class="dept"><div class="dept-top"><div class="ic" style="background:${bg};color:${fg}"><i class="ti ${d.ic}" aria-hidden="true"></i></div>${open?`<span class="chip c-warn">${open} to review</span>`:`<span class="chip c-ok"><i class="ti ti-check" aria-hidden="true"></i>Ready</span>`}</div>
+  <div><b>${d.n}</b><div class="meta">${d.items} items · $${d.val.toLocaleString()}</div></div>
+  <div><div class="meta" style="display:flex;justify-content:space-between;margin-bottom:5px"><span>In stock</span><span>${d.health}%</span></div><div class="meter"><span style="width:${d.health}%"></span></div></div></div>`}).join("")}
+
+let feedIdx=0;const times=["just now","1 min ago","3 min ago","6 min ago","9 min ago","14 min ago","21 min ago"];
+function feedItem(f,isNew){const [bg,fg]=TINT[f[1]];return `<li class="${isNew?"new":""}"><div class="ic" style="background:${bg};color:${fg}"><i class="ti ${f[0]}" aria-hidden="true"></i></div><div><b>${f[2]}</b><p>${f[3]}</p></div><time>__T__</time></li>`}
+function renderFeed(){const items=[];for(let i=0;i<6;i++)items.push(FEED[(feedIdx+i)%FEED.length]);
+  $("#feed").innerHTML=items.map((f,i)=>feedItem(f,false).replace("__T__",times[i])).join("")}
+function tickFeed(){feedIdx=(feedIdx-1+FEED.length)%FEED.length;const items=[];for(let i=0;i<6;i++)items.push(FEED[(feedIdx+i)%FEED.length]);
+  $("#feed").innerHTML=items.map((f,i)=>feedItem(f,i===0).replace("__T__",times[i])).join("")}
+
+function wasteChart(){
+  const data=[1920,1860,2010,1950,1540,1390,1280,1210,1180,1205];
+  const W=640,H=230,L=44,R=14,T=16,B=30,n=data.length,max=2400;
+  const x=i=>L+(W-L-R)*i/(n-1),y=v=>T+(H-T-B)*(1-v/max);
+  let g="";[0,600,1200,1800,2400].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--faint)">$${v.toLocaleString()}</text>`});
+  data.forEach((v,i)=>{g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--faint)">W${i+1}</text>`});
+  const pts=data.map((v,i)=>`${x(i)},${y(v)}`).join(" ");
+  const area=`${x(0)},${y(0)} ${pts} ${x(n-1)},${y(0)}`;
+  const gx=(x(3)+x(4))/2;
+  $("#wasteChart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weekly produce waste cost fell from about $1,950 to about $1,200 after FreshPilot was turned on in week 5">
+   ${g}
+   <rect x="${gx}" y="${T}" width="${W-R-gx}" height="${H-T-B}" fill="var(--brand-soft)" opacity=".45"/>
+   <line x1="${gx}" x2="${gx}" y1="${T}" y2="${H-B}" stroke="var(--brand-2)" stroke-dasharray="3 4"/>
+   <text x="${gx+8}" y="${T+14}" font-size="11.5" fill="var(--brand)" font-weight="500">FreshPilot on</text>
+   <polygon points="${area}" fill="var(--brand-2)" opacity=".08"/>
+   <polyline points="${pts}" fill="none" stroke="var(--brand-2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+   ${data.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="var(--panel)" stroke="var(--brand-2)" stroke-width="2"/>`).join("")}
+   <text x="${x(n-1)}" y="${y(data[n-1])-12}" text-anchor="end" font-size="12" fill="var(--ink)" font-weight="600">$${data[n-1].toLocaleString()}/wk</text>
+   <line id="xh" y1="${T}" y2="${H-B}" stroke="var(--faint)" opacity="0"/>
+   <rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent" id="hit"/>
+  </svg><div class="tip" id="tip"></div>`;
+  const svg=$("#wasteChart svg"),tip=$("#tip"),xh=$("#xh");
+  $("#hit").addEventListener("mousemove",e=>{const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)*W/r.width;
+    const i=Math.max(0,Math.min(n-1,Math.round((sx-L)/(W-L-R)*(n-1))));xh.setAttribute("x1",x(i));xh.setAttribute("x2",x(i));xh.setAttribute("opacity","1");
+    tip.innerHTML=`Week ${i+1} · <b>$${data[i].toLocaleString()}</b>${i>=4?" · with FreshPilot":""}`;tip.style.left=(x(i)/W*r.width)+"px";tip.style.top=(y(data[i])/H*r.height)+"px";tip.classList.add("on")});
+  $("#hit").addEventListener("mouseleave",()=>{tip.classList.remove("on");xh.setAttribute("opacity","0")});
+}
+
+function confBars(n){return `<span class="conf" aria-hidden="true">${[1,2,3].map(i=>`<i class="${i<=n?"f":""}"></i>`).join("")}</span>`}
+function rangeBar(d){const lo=d.range[0]*0.7,hi=d.range[2]*1.15,p=v=>((v-lo)/(hi-lo)*100).toFixed(1);
+  return `<div class="range"><div class="track"></div><div class="band" style="left:${p(d.range[0])}%;width:${p(d.range[2])-p(d.range[0])}%"></div><div class="pt" style="left:${p(d.range[1])}%"></div>
+   <span class="lab" style="left:${p(d.range[0])}%">${d.range[0]}</span><span class="lab top" style="left:${p(d.range[1])}%;color:var(--brand);font-weight:600">Most likely ${d.range[1]}</span><span class="lab" style="left:${p(d.range[2])}%">${d.range[2]}</span></div>`}
+
+function renderDecisions(){
+  const open=DEC.filter(d=>state[d.id].status==="open").length,done=DEC.length-open;
+  $("#prog-txt").textContent=`${done} of ${DEC.length} done`;$("#prog-bar").style.width=(done/DEC.length*100)+"%";
+  $("#nav-count").textContent=open||"";$("#hero-need").textContent=open?`${open} need${open===1?"s":""}`:"None need";
+  $("#hero-btn").textContent=open?`Review ${open} decision${open===1?"":"s"}`:"All decisions done";
+  let html=DEC.map(d=>{const s=state[d.id],[bg,fg]=TINT[d.t],qty=s.cases*d.pack;
+   if(s.status!=="open")return `<div class="dec"><div class="done-row"><i class="ti ti-circle-check" aria-hidden="true"></i><div style="flex:1"><b>${d.name}</b><p>${s.status==="approved"?`Approved · ${s.cases} case${s.cases>1?"s":""} (${qty} ${d.unit}) added to the order`:`Adjusted to ${s.cases} case${s.cases>1?"s":""} (${qty} ${d.unit}) · your change is logged so the agent learns from it`}</p></div><button class="btn" data-undo="${d.id}"><i class="ti ti-arrow-back-up" aria-hidden="true"></i>Undo</button></div></div>`;
+   return `<article class="dec" id="dec-${d.id}"><div class="dec-main">
+    <div>
+      <div class="dec-head"><div class="thumb" style="background:${bg};color:${fg}"><i class="ti ${d.ic}" aria-hidden="true"></i></div>
+        <div><h3>${d.name}</h3><div class="sub">${d.dept}</div><span class="chip ${d.tag[1]}">${d.tag[0]}</span></div></div>
+      <p class="noticed">${d.noticed}</p>
+      <ul class="reasons">${d.reasons.map(r=>`<li><i class="ti ${r[0]}" aria-hidden="true"></i>${r[1]}</li>`).join("")}</ul>
+    </div>
+    <div class="rec">
+      <small>Recommendation</small>
+      <div class="big">${d.cases} case${d.cases>1?"s":""} <span>· ${d.cases*d.pack} ${d.unit}</span></div>
+      ${d.pre?`<div class="pre"><i class="ti ti-info-circle" aria-hidden="true"></i>${d.pre}</div>`:""}
+      <div class="impact"><span>${d.impact}</span><span>Confidence${confBars(d.conf)} ${d.conf===3?"High":"Medium"}</span></div>
+      <div class="acts">
+        <button class="btn pri" data-approve="${d.id}"><i class="ti ti-check" aria-hidden="true"></i>Approve</button>
+        <button class="btn" data-adjust="${d.id}"><i class="ti ti-adjustments" aria-hidden="true"></i>Adjust</button>
+        <button class="btn" data-ask="${d.ask}"><i class="ti ti-message-question" aria-hidden="true"></i>Ask why</button>
+      </div>
+      <div class="adjust" id="adj-${d.id}">
+        <div class="stepper"><button data-step="-1" data-id="${d.id}" aria-label="Fewer cases">−</button><output id="out-${d.id}">${s.cases} cs</output><button data-step="1" data-id="${d.id}" aria-label="More cases">+</button></div>
+        <button class="btn pri" data-save="${d.id}">Save</button>
+        <div class="guard" id="g-${d.id}"></div>
+      </div>
+    </div></div>
+    <div class="math-toggle"><span style="font-size:13px;color:var(--muted)">Forecast, drivers and order math</span><button class="link" data-math="${d.id}">See the math <i class="ti ti-chevron-down" aria-hidden="true"></i></button></div>
+    ${techPanel(d)}</article>`}).join("");
+  if(!open)html=`<div class="empty-state"><i class="ti ti-circle-check" aria-hidden="true"></i><h3>You're all caught up</h3><p>Every order is ready. Send them to suppliers from Orders.</p><div style="margin-top:14px"><button class="btn pri" data-go="orders">Go to orders</button></div></div>`+html;
+  $("#decisions").innerHTML=html;
+  renderDepts();renderOrders();renderReview();
+}
+
+function renderOrders(){
+  $("#obody").innerHTML=DEPTS.map(d=>{const [bg,fg]=TINT[d.t];const open=DEC.filter(x=>x.dept===d.n&&state[x.id].status==="open").length;
+   const st=sent?`<span class="chip c-sky"><i class="ti ti-send" aria-hidden="true"></i>Sent</span>`:open?`<span class="chip c-warn">${open} decision${open>1?"s":""} pending</span>`:`<span class="chip c-ok"><i class="ti ti-check" aria-hidden="true"></i>Ready to send</span>`;
+   return `<tr class="clickable" data-dept="${d.n}"><td><div class="oname"><div class="ic" style="background:${bg};color:${fg}"><i class="ti ${d.ic}" aria-hidden="true"></i></div>${d.n}</div></td><td class="num">${d.items}</td><td class="num">${d.auto}</td><td class="num">$${d.val.toLocaleString()}</td><td>${st}</td></tr>`}).join("");
+  const open=DEC.filter(d=>state[d.id].status==="open").length;
+  $("#sendAll").disabled=open>0||sent;
+  $("#send-note").textContent=sent?"All orders sent to 6 suppliers. Delivery Friday morning.":open?`Finish ${open} decision${open>1?"s":""} before sending.`:"Everything is ready. Total $41,360 across 6 suppliers.";
+}
+
+function renderBars(){const rows=[["Produce",11.2,6.9],["Meat & Seafood",6.4,4.3],["Bakery",14.8,9.6],["Deli",8.1,5.7]];const m=16;
+  $("#bars").innerHTML=rows.map(([n,b,a])=>`<div class="barrow"><div class="lab"><b>${n}</b><span>−${Math.round((1-a/b)*100)}%</span></div>
+   <div class="bpair"><div class="bline"><div class="btrack"><span style="width:${b/m*100}%;background:var(--base)" title="Before: ${b}%"></span></div><span>${b}%</span></div>
+   <div class="bline"><div class="btrack"><span style="width:${a/m*100}%;background:var(--brand-2)" title="With FreshPilot: ${a}%"></span></div><span style="color:var(--ink);font-weight:500">${a}%</span></div></div></div>`).join("")}
+
+/* chat */
+function openDrawer(q){$("#drawer").classList.add("on");$("#scrim").classList.add("on");
+  if(!$("#msgs").children.length)addMsg("ai",`<p>Hi Maria. I'm watching orders, sales and shelves for Store #318. Ask me about any item or department.</p>`);
+  if(q)ask(q);else setTimeout(()=>$("#q").focus(),300)}
+function closeDrawer(){$("#drawer").classList.remove("on");$("#scrim").classList.remove("on")}
+function addMsg(who,html){const d=document.createElement("div");d.className="msg "+who;d.innerHTML=html;$("#msgs").appendChild(d);$("#msgs").scrollTop=1e6;return d}
+function ask(q){addMsg("me",q.replace(/</g,"&lt;"));const t=addMsg("ai",`<span class="dots"><span></span><span></span><span></span></span>`);
+  const lq=q.toLowerCase();const hit=ANSWERS.find(a=>a.k.some(k=>lq.includes(k)));
+  setTimeout(()=>{t.innerHTML=hit?(typeof hit.a==="function"?hit.a():hit.a)+`<div class="src"><i class="ti ti-database" aria-hidden="true"></i>Based on: ${hit.s}</div>`:`<p>In this demo I can answer questions about today's decisions (strawberries, cilantro, chicken, sourdough, romaine), waste, shelf checks, or what the agents did today.</p>`;$("#msgs").scrollTop=1e6},900)}
+$("#sugg").innerHTML=SUGG.map(s=>`<button type="button">${s}</button>`).join("");
+$("#sugg").addEventListener("click",e=>{if(e.target.tagName==="BUTTON")ask(e.target.textContent)});
+$("#composer").addEventListener("submit",e=>{e.preventDefault();const v=$("#q").value.trim();if(!v)return;$("#q").value="";ask(v)});
+$("#closeDr").onclick=closeDrawer;$("#scrim").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+
+function toast(m){const t=$("#toast");t.innerHTML=`<i class="ti ti-circle-check" aria-hidden="true"></i>${m}`;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),2400)}
+function go(v){$$(".nav[data-view]").forEach(n=>n.classList.toggle("on",n.dataset.view===v));$$(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
+  $("#subtitle").textContent={home:"Here's what your agents handled today.",obs:"How the platform is running: pipeline, agents, models and guardrails.",review:"Every item the agents looked at today, and what they decided.",catalog:"Supplier listings cleaned into one product catalog.",inbox:"A few calls that need a manager's eye.",orders:"Everything prepared for today's delivery cycle.",impact:"What changed since FreshPilot went live."}[v];window.scrollTo({top:0,behavior:"smooth"})}
+
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const ds=b.dataset;
+  if(ds.view)go(ds.view);
+  if(ds.go)go(ds.go);
+  if(ds.ask!==undefined)openDrawer(ds.ask);
+  if(ds.approve){state[ds.approve].status="approved";toast(`${DEC.find(d=>d.id===ds.approve).name} approved`);renderDecisions()}
+  if(ds.adjust)$("#adj-"+ds.adjust).classList.toggle("on");
+  if(ds.step){const d=DEC.find(x=>x.id===ds.id),s=state[d.id];s.cases=Math.max(0,s.cases+ +ds.step);
+    $("#out-"+d.id).textContent=s.cases+" cs";const g=$("#g-"+d.id),lo=Math.floor(d.cases*.6),hi=Math.ceil(d.cases*1.5);
+    if(s.cases<lo||s.cases>hi){g.className="guard bad";g.textContent=`That's far from the plan (${lo}–${hi} cases). It will be sent to your category manager to confirm.`}
+    else{g.className="guard good";g.textContent=`${s.cases*d.pack} ${d.unit} · within the safe range`}}
+  if(ds.save){const d=DEC.find(x=>x.id===ds.save),s=state[d.id],lo=Math.floor(d.cases*.6),hi=Math.ceil(d.cases*1.5);
+    if(s.cases<lo||s.cases>hi){toast("Sent to category manager for approval")}else toast(`${d.name} set to ${s.cases} cases`);
+    s.status=s.cases===d.cases?"approved":"adjusted";renderDecisions()}
+  if(ds.undo){state[ds.undo]={status:"open",cases:DEC.find(d=>d.id===ds.undo).cases};sent=false;renderDecisions()}
+  if(ds.type){rv.type=ds.type;rv.page=0;rv.open=null;renderReview()}
+  if(ds.page){rv.page+= +ds.page;rv.open=null;renderReview()}
+  if(ds.cat!==undefined){CATALOG[+ds.cat].done=ds.act;toast(`${ds.act}: ${CATALOG[+ds.cat].m}`);renderCatalog()}
+  if(ds.opendec){go("inbox");setTimeout(()=>{const el=$("#dec-"+ds.opendec);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})},80)}
+  if(ds.math){const m=$("#m-"+ds.math);m.classList.toggle("on");b.innerHTML=m.classList.contains("on")?`Hide the math <i class="ti ti-chevron-up" aria-hidden="true"></i>`:`See the math <i class="ti ti-chevron-down" aria-hidden="true"></i>`}
+});
+$("#rbody").addEventListener("click",e=>{if(e.target.closest("button"))return;const tr=e.target.closest("tr[data-rid]");if(!tr)return;rv.open=rv.open===tr.dataset.rid?null:tr.dataset.rid;renderReview()});
+$("#rq").addEventListener("input",e=>{rv.q=e.target.value.trim();rv.page=0;rv.open=null;renderReview()});
+$("#rdept").innerHTML+=DEPTS.map(d=>`<option>${d.n}</option>`).join("");
+$("#rdept").addEventListener("change",e=>{rv.dept=e.target.value;rv.page=0;rv.open=null;renderReview()});
+$("#obody").addEventListener("click",e=>{const tr=e.target.closest("tr[data-dept]");if(!tr)return;rv.dept=tr.dataset.dept;rv.type="all";rv.page=0;rv.q="";$("#rq").value="";$("#rdept").value=rv.dept;go("review");renderReview()});
+$("#tbody").addEventListener("click",e=>{const tr=e.target.closest("tr[data-run]");if(!tr)return;openRun=openRun===tr.dataset.run?null:tr.dataset.run;renderRuns()});
+$("#sendAll").onclick=()=>{sent=true;renderOrders();countdown();toast("Orders sent to 6 suppliers")};
+
+greet();countdown();setInterval(countdown,30000);
+renderFeed();setInterval(tickFeed,4500);
+renderDecisions();renderCatalog();renderGantt();renderRuns();renderWape();wasteChart();renderBars();countUp();
+</script>
+</body>
+</html>
