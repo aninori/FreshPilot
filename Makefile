@@ -14,7 +14,7 @@ data:
 
 train:
 	uv run python -m freshpilot.catalog.run
-	@echo "train: forecasting model training lands in M3 (MLflow logs in mlruns/)"
+	uv run python -m freshpilot.forecasting.run
 
 pipeline:
 	@echo "pipeline: daily pipeline orchestrator lands in M7"

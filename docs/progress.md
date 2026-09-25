@@ -149,14 +149,46 @@ None of this changed CAT-4's required algorithm (still plain logistic regression
 
 **Acceptance:** WAPE beats baseline ≥25%; coverage 78–85%; non-crossing test.
 
-- [ ] Feature engineering (FC-2)
-- [ ] Time-based train/calibrate/test split (FC-3)
-- [ ] One LightGBM model per quantile (FC-1), non-crossing enforcement (FC-4)
-- [ ] Hand-rolled split-conformal CQR (open question #3) to hit FC-5 / G2
-- [ ] SHAP drivers on P50 (FC-6)
-- [ ] Delivery-cycle horizon forecast (FC-7)
-- [ ] MLflow logging (FC-8)
-- [ ] WAPE vs baseline per department, 80% coverage, one example item with P10/P50/P90 + top SHAP drivers
+Design decisions:
+
+- **Split**: 180 days -> train days 0-123 (124 days), calibrate days 124-151 (28 days), test days 152-179 (last 28 days), per FC-3.
+- **Baseline for G1**: seasonal-naive = lag-7 (last week's same weekday), matching EVAL-2's baseline policy definition elsewhere in the BRD.
+- **Conformal method (open question #3, resolved):** hand-rolled split-conformal CQR (Romano et al.) — on the calibration split, compute `s = max(q10_pred - y, y - q90_pred)` per row, take its `1-alpha` empirical quantile as margin `m`, then `q10_final = q10_pred - m`, `q90_final = q90_pred + m`. No MAPIE dependency.
+- **Censored sales target**: BRD §8.3 explicitly censors sales at on-shelf stock. No uncensoring step — no FC-x ID requires it, the baseline suffers the same censoring, so the relative WAPE comparison (G1) stays fair.
+- **`forecasts` table added** (date, product_id, q10..q90 raw, q10_cal/q90_cal) — a pipeline-stage output per §6.3, not raw synthetic data, following the same pattern as M2's `match_candidates`.
+- **FC-7 horizon is scaled, not separately modeled**: ORD-2 (§9.4) says the engine's cycle-demand quantile is "interpolated from the calibrated quantiles" — so `horizon.py` scales the daily median linearly by `cycle_days` and the spread by `sqrt(cycle_days)` (standard sum-of-iid-days approximation) rather than training a second set of quantile models per horizon length. Reuses `DEPT_CYCLE_DAYS` from the M1 generator (same real-world concept: department delivery cadence).
+- New dependencies: `lightgbm`, `shap`, `mlflow` — all installed cleanly, no GPU/compiled-model downloads.
+- **MLflow 3.x tooling gap**: its plain `mlruns/` file store is now deprecated in favor of a SQLite backend by default (`mlflow.db` appeared instead). CLAUDE.md's Makefile explicitly documents `mlruns/`, so set `MLFLOW_ALLOW_FILE_STORE=true` (MLflow's own documented opt-out) plus an explicit `file:./mlruns` tracking URI, rather than silently switching backends.
+
+Checklist:
+
+- [x] Feature engineering (FC-2)
+- [x] Time-based train/calibrate/test split (FC-3)
+- [x] One LightGBM model per quantile (FC-1), non-crossing enforcement (FC-4)
+- [x] Hand-rolled split-conformal CQR to hit FC-5 / G2
+- [x] SHAP drivers on P50 (FC-6)
+- [x] Delivery-cycle horizon forecast (FC-7)
+- [x] MLflow logging (FC-8)
+- [x] WAPE vs baseline per department, 80% coverage, one example item with P10/P50/P90 + top SHAP drivers
+
+**Result:** PASS, 2026-09-25. 34/34 tests pass, ruff clean, mypy clean.
+
+```
+Forecasting (FC-1..FC-8)
+  WAPE model=0.3960 baseline=0.5421 improvement=27.0% (target >= 25%)
+  80% interval coverage: 78.6% (target 78-85%)
+  Non-crossing quantiles: OK
+  WAPE by department:
+    bakery          model=0.4027 baseline=0.5602 improvement=28.1%
+    dairy_eggs      model=0.4034 baseline=0.5368 improvement=24.9%
+    deli            model=0.4268 baseline=0.5819 improvement=26.6%
+    meat_seafood    model=0.4169 baseline=0.5779 improvement=27.9%
+    produce         model=0.3753 baseline=0.5205 improvement=27.9%
+```
+
+One example item (`PRD-1085`, "Garlic, each", 2025-06-08, a promo day): actual qty_sold=12.0, **P10=6.9, P50=14.7, P90=20.5**. Top SHAP drivers: `["15% off", "Price", "Promo starts Sun"]`.
+
+Note: dairy_eggs's individual improvement (24.9%) sits just under the 25% line, but §12's M3 acceptance check is the *overall* WAPE figure (27.0%), not a per-department minimum — G1 is phrased the same way ("WAPE vs seasonal-naive baseline," no per-department clause). Flagging it rather than burying it; nothing in the BRD requires every department to individually clear 25%.
 
 **Result:** _(filled in after run)_
 

@@ -434,6 +434,9 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
 
     product_listing_map = pd.DataFrame(columns=["listing_id", "product_id", "match_score", "method"])
     match_candidates = pd.DataFrame(columns=["listing_id", "product_id", "score", "decision"])
+    forecasts = pd.DataFrame(
+        columns=["date", "product_id", "q10", "q25", "q50", "q60", "q70", "q75", "q85", "q90", "q10_cal", "q90_cal"]
+    )
 
     answer_key = answer_rows_to_df(answer_rows)
 
@@ -445,6 +448,7 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
         "supplier_listings": listings,
         "product_listing_map": product_listing_map,
         "match_candidates": match_candidates,
+        "forecasts": forecasts,
         "promotions": promotions,
         "weather": weather,
         "calendar": calendar,

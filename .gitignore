@@ -14,6 +14,7 @@ uv.lock.bak
 data/*.duckdb
 data/*.parquet
 mlruns/
+mlflow.db
 reports/*
 !reports/.gitkeep
 !reports/samples/

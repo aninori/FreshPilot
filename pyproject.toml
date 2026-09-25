@@ -19,6 +19,9 @@ dependencies = [
     "rapidfuzz>=3.9",
     "pint>=0.24",
     "scikit-learn>=1.5",
+    "lightgbm>=4.3",
+    "shap>=0.46",
+    "mlflow>=2.16",
 ]
 
 [dependency-groups]
@@ -47,7 +50,7 @@ module = ["freshpilot.engine.*", "freshpilot.guardrails.*"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["duckdb.*", "pandas.*", "sklearn.*", "pint.*", "scipy.*"]
+module = ["duckdb.*", "pandas.*", "sklearn.*", "pint.*", "scipy.*", "shap.*", "lightgbm.*", "mlflow.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

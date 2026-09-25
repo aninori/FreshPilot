@@ -168,6 +168,24 @@ DDL: dict[str, str] = {
             decision VARCHAR NOT NULL
         )
     """,
+    # M3 pipeline-stage output (§6.3 stages 4-5: "Demand forecast" then
+    # "Conformal calibration" add the *_cal columns to the same table).
+    "forecasts": """
+        CREATE TABLE forecasts (
+            date DATE NOT NULL,
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            q10 DOUBLE NOT NULL,
+            q25 DOUBLE NOT NULL,
+            q50 DOUBLE NOT NULL,
+            q60 DOUBLE NOT NULL,
+            q70 DOUBLE NOT NULL,
+            q75 DOUBLE NOT NULL,
+            q85 DOUBLE NOT NULL,
+            q90 DOUBLE NOT NULL,
+            q10_cal DOUBLE NOT NULL,
+            q90_cal DOUBLE NOT NULL
+        )
+    """,
 }
 
 # Creation order matters: referenced tables must exist before their FKs do.
@@ -189,6 +207,7 @@ TABLE_ORDER: list[str] = [
     "bake_plans",
     "answer_key",
     "match_candidates",
+    "forecasts",
 ]
 
 
