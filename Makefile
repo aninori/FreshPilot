@@ -13,7 +13,8 @@ data:
 	uv run python -m freshpilot.data.summary
 
 train:
-	@echo "train: forecasting/matching training lands in M2-M3 (make train will log to mlruns/)"
+	uv run python -m freshpilot.catalog.run
+	@echo "train: forecasting model training lands in M3 (MLflow logs in mlruns/)"
 
 pipeline:
 	@echo "pipeline: daily pipeline orchestrator lands in M7"

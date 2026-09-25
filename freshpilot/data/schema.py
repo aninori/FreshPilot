@@ -158,6 +158,16 @@ DDL: dict[str, str] = {
             details VARCHAR
         )
     """,
+    # M2 pipeline-stage output (BRD §6.2's "Catalog reconcile" -> match_candidates),
+    # not raw synthetic data — populated by freshpilot.catalog.run, not the M1 generator.
+    "match_candidates": """
+        CREATE TABLE match_candidates (
+            listing_id VARCHAR NOT NULL REFERENCES supplier_listings(listing_id),
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            score DOUBLE NOT NULL,
+            decision VARCHAR NOT NULL
+        )
+    """,
 }
 
 # Creation order matters: referenced tables must exist before their FKs do.
@@ -178,6 +188,7 @@ TABLE_ORDER: list[str] = [
     "yields",
     "bake_plans",
     "answer_key",
+    "match_candidates",
 ]
 
 

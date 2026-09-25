@@ -331,10 +331,12 @@ def messify_listing(
     raw_unit: str
     raw_pack: str
     if sell_unit == "lb":
-        per_case_lb = round(case_pack * rng.uniform(0.9, 1.15), 1)
+        # Per-unit weight, not case total: BRD's own CAT-1 example is
+        # "CS/12 5LB" -> 60 lb, i.e. case_pack (12) x per-unit weight (5).
+        per_unit_lb = round(rng.uniform(0.85, 1.2), 2)
         raw_unit = str(rng.choice(["LB", "lb", "Lb"]))
         raw_pack = str(
-            rng.choice([f"CS/{case_pack} {per_case_lb}LB", f"{per_case_lb} LB", f"CS/{case_pack}"])
+            rng.choice([f"CS/{case_pack} {per_unit_lb}LB", f"{per_unit_lb} LB", f"CS/{case_pack}"])
         )
     elif sell_unit in ("ct", "ea"):
         raw_unit = str(rng.choice(["EA", "ea", "CT", "ct"]))
