@@ -20,7 +20,8 @@ pipeline:
 	@echo "pipeline: daily pipeline orchestrator lands in M7"
 
 eval:
-	@echo "eval: metrics + backtest lands in M5/M6 (make eval will write reports/eval.json, reports/eval.md)"
+	uv run python -m freshpilot.evals.run
+	@echo "eval: G7 (faithfulness) and G8 (LLM cost) land in M6 (agents/guardrails)"
 
 api:
 	@echo "api: FastAPI app lands in M8 (make api will serve on :8000)"

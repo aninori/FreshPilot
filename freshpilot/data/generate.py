@@ -299,8 +299,16 @@ def simulate_history(
         demand_t = sample_negative_binomial(rng, mu_t)
 
         due_today = (offset == (t % np.maximum(cycle_days, 1)))
-        target_qty = np.ceil(base_rate * cycle_days * 1.4 / case_pack) * case_pack
-        supply_t = np.where(due_today & ~is_bakery, target_qty, 0.0)
+        # Order-up-to-par, reactive to book_on_hand (not a blind fixed delivery):
+        # a fixed delivery regardless of existing stock lets leftover inventory
+        # compound unboundedly over 180 days. Using book_on_hand (not true_on_hand)
+        # is also the more faithful simulation of P2 (BRD §1.2): the system reorders
+        # off what it *believes* it has, which is exactly why phantom stock is a
+        # problem in real life — it never triggers a reorder on its own.
+        par_level = base_rate * cycle_days * 1.4
+        needed = np.maximum(0.0, par_level - book_on_hand)
+        order_up_to_qty = np.ceil(needed / case_pack) * case_pack
+        supply_t = np.where(due_today & ~is_bakery, order_up_to_qty, 0.0)
 
         bake_qty = np.ceil(mu_t * 1.1)
         supply_t = np.where(is_bakery, bake_qty, supply_t)
@@ -328,7 +336,9 @@ def simulate_history(
 
         day_price = np.where(promo_active[t], unit_price * (1 - promo_discount[t] / 100), unit_price)
 
-        sales_rows.append(np.column_stack([np.full(n, dates[t]), product_ids, sales_t, day_price, promo_active[t]]))
+        sales_rows.append(
+            np.column_stack([np.full(n, dates[t]), product_ids, sales_t, day_price, promo_active[t], demand_t])
+        )
         recv_mask = (supply_t > 0) & ~is_bakery
         receipts_rows.append(
             np.column_stack(
@@ -353,14 +363,20 @@ def simulate_history(
                 ]
             )
         )
-        inventory_rows.append(np.column_stack([np.full(n, dates[t]), product_ids, book_on_hand.copy()]))
+        inventory_rows.append(
+            np.column_stack([np.full(n, dates[t]), product_ids, book_on_hand.copy(), true_on_hand.copy()])
+        )
 
     sales_daily = pd.DataFrame(
-        np.concatenate(sales_rows), columns=["date", "product_id", "qty_sold", "price", "on_promo"]
+        np.concatenate(sales_rows), columns=["date", "product_id", "qty_sold", "price", "on_promo", "true_demand"]
     )
     sales_daily["store_id"] = STORE_ID
-    sales_daily = sales_daily.astype({"qty_sold": float, "price": float, "on_promo": bool})
-    sales_daily = sales_daily[["date", "store_id", "product_id", "qty_sold", "price", "on_promo"]]
+    sales_daily = sales_daily.astype(
+        {"qty_sold": float, "price": float, "on_promo": bool, "true_demand": float}
+    )
+    sales_daily = sales_daily[
+        ["date", "store_id", "product_id", "qty_sold", "price", "on_promo", "true_demand"]
+    ]
 
     receipts = pd.DataFrame(np.concatenate(receipts_rows), columns=["date", "product_id", "qty_received", "lot_id"])
     receipts["store_id"] = STORE_ID
@@ -377,11 +393,11 @@ def simulate_history(
     waste_log = waste_log[["date", "store_id", "product_id", "qty_wasted", "reason"]]
 
     inventory_book = pd.DataFrame(
-        np.concatenate(inventory_rows), columns=["date", "product_id", "book_on_hand"]
+        np.concatenate(inventory_rows), columns=["date", "product_id", "book_on_hand", "true_on_hand"]
     )
     inventory_book["store_id"] = STORE_ID
-    inventory_book = inventory_book.astype({"book_on_hand": float})
-    inventory_book = inventory_book[["date", "store_id", "product_id", "book_on_hand"]]
+    inventory_book = inventory_book.astype({"book_on_hand": float, "true_on_hand": float})
+    inventory_book = inventory_book[["date", "store_id", "product_id", "book_on_hand", "true_on_hand"]]
 
     tables = {
         "sales_daily": sales_daily,
@@ -446,6 +462,8 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
             "target_qty", "estimated_on_hand", "order_cases", "order_units", "breakdown",
         ]
     )
+    exceptions = pd.DataFrame(columns=["product_id", "date", "type", "details"])
+    item_reasons = pd.DataFrame(columns=["product_id", "date", "reason", "category"])
 
     answer_key = answer_rows_to_df(answer_rows)
 
@@ -459,6 +477,8 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
         "match_candidates": match_candidates,
         "forecasts": forecasts,
         "calculations": calculations,
+        "exceptions": exceptions,
+        "item_reasons": item_reasons,
         "promotions": promotions,
         "weather": weather,
         "calendar": calendar,

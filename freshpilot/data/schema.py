@@ -65,6 +65,9 @@ DDL: dict[str, str] = {
             method VARCHAR NOT NULL
         )
     """,
+    # true_demand is ground truth the generator alone can know (uncensored, before
+    # min(demand, on-shelf stock)) — needed for EVAL-2's backtest, which must use
+    # true demand rather than the (deliberately censored) qty_sold.
     "sales_daily": """
         CREATE TABLE sales_daily (
             date DATE NOT NULL,
@@ -72,7 +75,8 @@ DDL: dict[str, str] = {
             product_id VARCHAR NOT NULL REFERENCES products(product_id),
             qty_sold DOUBLE NOT NULL,
             price DOUBLE NOT NULL,
-            on_promo BOOLEAN NOT NULL
+            on_promo BOOLEAN NOT NULL,
+            true_demand DOUBLE NOT NULL
         )
     """,
     "receipts": """
@@ -93,12 +97,16 @@ DDL: dict[str, str] = {
             reason VARCHAR NOT NULL
         )
     """,
+    # true_on_hand is the same kind of generator-only ground truth as
+    # sales_daily.true_demand — the actual physical shelf stock, vs. what the
+    # store's system believes (book_on_hand). Needed for EVAL-2's backtest.
     "inventory_book": """
         CREATE TABLE inventory_book (
             date DATE NOT NULL,
             store_id VARCHAR NOT NULL REFERENCES stores(store_id),
             product_id VARCHAR NOT NULL REFERENCES products(product_id),
-            book_on_hand DOUBLE NOT NULL
+            book_on_hand DOUBLE NOT NULL,
+            true_on_hand DOUBLE NOT NULL
         )
     """,
     "promotions": """
@@ -200,6 +208,25 @@ DDL: dict[str, str] = {
             breakdown VARCHAR NOT NULL
         )
     """,
+    # M5 pipeline-stage output (§6.3 stage 8: exception checks -> `exceptions`).
+    "exceptions": """
+        CREATE TABLE exceptions (
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            date DATE NOT NULL,
+            type VARCHAR NOT NULL,
+            details VARCHAR NOT NULL
+        )
+    """,
+    # M5 pipeline-stage output (EXC-6): one row per item that passed every check,
+    # with the manager-facing one-liner and its category.
+    "item_reasons": """
+        CREATE TABLE item_reasons (
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            date DATE NOT NULL,
+            reason VARCHAR NOT NULL,
+            category VARCHAR NOT NULL
+        )
+    """,
 }
 
 # Creation order matters: referenced tables must exist before their FKs do.
@@ -223,6 +250,8 @@ TABLE_ORDER: list[str] = [
     "match_candidates",
     "forecasts",
     "calculations",
+    "exceptions",
+    "item_reasons",
 ]
 
 

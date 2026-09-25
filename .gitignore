@@ -29,3 +29,6 @@ web/dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local session/tooling state (not project content)
+.claude/

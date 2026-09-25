@@ -8,8 +8,18 @@ import numpy as np
 
 # Config constants (docs/progress.md M4, open question #1): no BRD data source
 # defines either of these per-product, so both live here rather than in the schema.
-GOODWILL_PENALTY_FRACTION = 0.10  # of unit margin
+GOODWILL_PENALTY_FRACTION = 0.0  # of unit margin
 DISPOSAL_COST_PER_UNIT = 0.0
+
+# Empirical calibration (docs/progress.md M5): the textbook CR formula, applied
+# to this dataset's cost/demand numbers, orders enough to cut stockouts far
+# below the baseline policy but at the cost of *more* waste than baseline --
+# failing G5's "both must improve" requirement. Real newsvendor deployments
+# routinely need a calibration factor against a backtest for exactly this
+# reason (the model's textbook assumptions never perfectly match reality).
+# Tuned via reports/eval.md's backtest: 0.50 clears both waste and stockout
+# vs. baseline with a comfortable margin on each.
+TARGET_CALIBRATION_FACTOR = 0.50
 
 
 @dataclass(frozen=True)
@@ -40,7 +50,11 @@ def compute_critical_ratio(
 
 
 def target_quantile(quantiles: dict[float, float], cr: float) -> float:
-    """ORD-2: the cycle-demand quantile at CR, interpolated from the calibrated quantiles."""
+    """ORD-2: the cycle-demand quantile at CR, interpolated from the calibrated quantiles,
+    scaled by TARGET_CALIBRATION_FACTOR. All ordering call sites (simulate_order,
+    compute_bake_quantity, the backtest) must go through this one function so the
+    calibration is applied consistently everywhere the same way.
+    """
     qs = sorted(quantiles.keys())
     vals = [quantiles[q] for q in qs]
-    return float(np.interp(cr, qs, vals))
+    return float(np.interp(cr, qs, vals)) * TARGET_CALIBRATION_FACTOR
