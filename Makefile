@@ -9,7 +9,8 @@ setup:
 	fi
 
 data:
-	@echo "data: synthetic generator lands in M1 (make data will populate data/freshpilot.duckdb)"
+	uv run python -m freshpilot.data.generate
+	uv run python -m freshpilot.data.summary
 
 train:
 	@echo "train: forecasting/matching training lands in M2-M3 (make train will log to mlruns/)"
