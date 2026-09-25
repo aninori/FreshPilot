@@ -186,6 +186,20 @@ DDL: dict[str, str] = {
             q90_cal DOUBLE NOT NULL
         )
     """,
+    # M4 pipeline-stage output (ORD-6): every engine call's full breakdown.
+    "calculations": """
+        CREATE TABLE calculations (
+            calc_id VARCHAR PRIMARY KEY,
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            calc_type VARCHAR NOT NULL,
+            date DATE NOT NULL,
+            target_qty DOUBLE NOT NULL,
+            estimated_on_hand DOUBLE NOT NULL,
+            order_cases INTEGER NOT NULL,
+            order_units DOUBLE NOT NULL,
+            breakdown VARCHAR NOT NULL
+        )
+    """,
 }
 
 # Creation order matters: referenced tables must exist before their FKs do.
@@ -208,6 +222,7 @@ TABLE_ORDER: list[str] = [
     "answer_key",
     "match_candidates",
     "forecasts",
+    "calculations",
 ]
 
 

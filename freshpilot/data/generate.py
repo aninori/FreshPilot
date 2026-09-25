@@ -308,7 +308,10 @@ def simulate_history(
         true_on_hand += supply_t
         book_on_hand += supply_t
 
-        unrecorded_shrink = np.where(phantom_active[t], true_on_hand * rng.uniform(0.9, 0.99, size=n), 0.0)
+        # Full drain, not a partial haircut: BRD §8.4 says sales drop to zero during
+        # a phantom_stock event, which needs true_on_hand at exactly 0, not a small
+        # trickle that would still generate the occasional nonzero sale.
+        unrecorded_shrink = np.where(phantom_active[t], true_on_hand, 0.0)
         true_on_hand -= unrecorded_shrink
 
         waste_rate_today = waste_rate_baseline * shrink_mult[t]
@@ -437,6 +440,12 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
     forecasts = pd.DataFrame(
         columns=["date", "product_id", "q10", "q25", "q50", "q60", "q70", "q75", "q85", "q90", "q10_cal", "q90_cal"]
     )
+    calculations = pd.DataFrame(
+        columns=[
+            "calc_id", "product_id", "calc_type", "date",
+            "target_qty", "estimated_on_hand", "order_cases", "order_units", "breakdown",
+        ]
+    )
 
     answer_key = answer_rows_to_df(answer_rows)
 
@@ -449,6 +458,7 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
         "product_listing_map": product_listing_map,
         "match_candidates": match_candidates,
         "forecasts": forecasts,
+        "calculations": calculations,
         "promotions": promotions,
         "weather": weather,
         "calendar": calendar,

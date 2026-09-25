@@ -93,6 +93,8 @@ Two mypy fixes needed beyond the design decisions above: numpy's bundled stubs (
 
 **Correction found while building M2:** `messify_listing`'s "lb" branch generated a weight figure meaning *case total* (`case_pack * ~1.0`), but BRD's own CAT-1 worked example is `"CS/12 5LB" -> 60 lb` — i.e. the figure is **per-unit** weight, multiplied by case_pack to get the total. Fixed in [names.py](../freshpilot/data/names.py) (`per_unit_lb` instead of `per_case_lb`) and regenerated `data/freshpilot.duckdb`; row counts/answer-key counts are unaffected (only the numeric value inside `raw_pack` strings changed), confirmed by re-running the full M1 suite.
 
+**Correction found while building M4:** the `phantom_stock` simulation in [generate.py](../freshpilot/data/generate.py) left 1–10% of `true_on_hand` remaining each day of a planted event (`true_on_hand * uniform(0.9, 0.99)` shrink), rather than draining it fully. §8.4 says sales should drop to *zero* during these events, but a small residual meant `qty_sold` was a nonzero trickle (e.g. 0.03, 1.57) instead of exact zero — which broke INV-2's "consecutive zero-sales days" signal almost completely (phantom recall was 5/12 = 42% until this was fixed). Changed the shrink to a full drain (`unrecorded_shrink = true_on_hand`, i.e. any stock present including that day's supply is silently lost for the whole event window); recall went to 12/12. Re-ran the M1-M3 suites afterward to confirm nothing else regressed — it didn't (M2 F1 unchanged at 0.9676; M3 WAPE improvement moved from 27.0% to 26.5%, still comfortably over target).
+
 ---
 
 ## M2 — Catalog reconciliation (rules + ML)
@@ -171,26 +173,24 @@ Checklist:
 - [x] MLflow logging (FC-8)
 - [x] WAPE vs baseline per department, 80% coverage, one example item with P10/P50/P90 + top SHAP drivers
 
-**Result:** PASS, 2026-09-25. 34/34 tests pass, ruff clean, mypy clean.
+**Result:** PASS, 2026-09-25. 34/34 tests pass, ruff clean, mypy clean. (Numbers below are post-M4's phantom_stock generator fix — see that correction note above; re-ran M3 after it to confirm the acceptance check still holds.)
 
 ```
 Forecasting (FC-1..FC-8)
-  WAPE model=0.3960 baseline=0.5421 improvement=27.0% (target >= 25%)
-  80% interval coverage: 78.6% (target 78-85%)
+  WAPE model=0.3970 baseline=0.5399 improvement=26.5% (target >= 25%)
+  80% interval coverage: 79.6% (target 78-85%)
   Non-crossing quantiles: OK
   WAPE by department:
-    bakery          model=0.4027 baseline=0.5602 improvement=28.1%
-    dairy_eggs      model=0.4034 baseline=0.5368 improvement=24.9%
-    deli            model=0.4268 baseline=0.5819 improvement=26.6%
-    meat_seafood    model=0.4169 baseline=0.5779 improvement=27.9%
-    produce         model=0.3753 baseline=0.5205 improvement=27.9%
+    bakery          model=0.4047 baseline=0.5487 improvement=26.2%
+    dairy_eggs      model=0.4075 baseline=0.5523 improvement=26.2%
+    deli            model=0.4288 baseline=0.5882 improvement=27.1%
+    meat_seafood    model=0.4108 baseline=0.5564 improvement=26.2%
+    produce         model=0.3759 baseline=0.5118 improvement=26.6%
 ```
 
-One example item (`PRD-1085`, "Garlic, each", 2025-06-08, a promo day): actual qty_sold=12.0, **P10=6.9, P50=14.7, P90=20.5**. Top SHAP drivers: `["15% off", "Price", "Promo starts Sun"]`.
+One example item (`PRD-1085`, "Garlic, each", 2025-06-08, a promo day): actual qty_sold=5.0, **P10=6.4, P50=12.3, P90=22.4**. Top SHAP drivers: `["29% off", "Price", "Shelf Life Days"]`.
 
-Note: dairy_eggs's individual improvement (24.9%) sits just under the 25% line, but §12's M3 acceptance check is the *overall* WAPE figure (27.0%), not a per-department minimum — G1 is phrased the same way ("WAPE vs seasonal-naive baseline," no per-department clause). Flagging it rather than burying it; nothing in the BRD requires every department to individually clear 25%.
-
-**Result:** _(filled in after run)_
+Note: §12's M3 acceptance check is the *overall* WAPE figure, not a per-department minimum — G1 is phrased the same way ("WAPE vs seasonal-naive baseline," no per-department clause). All five departments individually clear 25% here, but that's not what's gated.
 
 ---
 
@@ -198,15 +198,32 @@ Note: dairy_eggs's individual improvement (24.9%) sits just under the 25% line, 
 
 **Acceptance:** property tests (ORD-8); phantom recall ≥0.90.
 
-- [ ] Inventory estimate + phantom detection (INV-1..3)
-- [ ] Newsvendor critical ratio incl. goodwill penalty / disposal cost as config constants, min/max order columns (resolve open question #1)
-- [ ] Case-pack rounding, yields (ORD-4), bakery (ORD-5)
-- [ ] `calc_id` + `calculations` table (ORD-6)
-- [ ] `simulate_order` read-only entry point (ORD-7)
-- [ ] Property tests: monotonic, non-negative, case-pack multiple (ORD-8)
-- [ ] `engine/` passes `mypy --strict`
+Design decisions:
 
-**Result:** _(filled in after run)_
+- **Lot age assumption**: no FIFO lot-tracking through receipts (would need per-lot age reconstruction); INV-1's expected shrink uses `shelf_life_days / 2` as the assumed average age of on-shelf stock — a documented `ponytail:`-level simplification, not a BRD requirement.
+- **INV-3's "expected residual"**: derived directly from INV-2's own Poisson test rather than an unrelated formula — `mu_effective = -ln(0.001) / consecutive_zero_days` is the demand rate at which the observed zero-run would sit exactly at the 0.001 significance threshold, giving a small, self-consistent "how much could plausibly still be there" residual once phantom stock is flagged.
+- **Goodwill penalty / disposal cost (open question #1, resolved)**: both are config constants in `freshpilot.engine.newsvendor` (goodwill = 10% of unit margin, disposal = $0.00/unit — no data source justifies a nonzero default), not per-product columns, since no BRD data source defines them per-item.
+- **`calc_id` is deterministic**, not random (`CALC-{calc_type}-{product_id}-{date}`) — CLAUDE.md rule 6 / NFR-2 require identical output across runs for a fixed SEED, and `uuid4()` would break that.
+- **Bakery (ORD-5) reuses the same newsvendor code** with `shelf_life_days=1` and no case-pack rounding (a bake plan is a quantity, not a case order) rather than a separate implementation.
+- **`calculations` table added** (calc_id PK, product_id, calc_type, date, target_qty, estimated_on_hand, order_cases, order_units, breakdown JSON) — same pipeline-output pattern as `match_candidates`/`forecasts`.
+
+Checklist:
+
+- [x] Inventory estimate + phantom detection (INV-1..3)
+- [x] Newsvendor critical ratio incl. goodwill penalty / disposal cost as config constants, min/max order columns (resolve open question #1)
+- [x] Case-pack rounding, yields (ORD-4), bakery (ORD-5)
+- [x] `calc_id` + `calculations` table (ORD-6)
+- [x] `simulate_order` read-only entry point (ORD-7)
+- [x] Property tests: monotonic, non-negative, case-pack multiple (ORD-8)
+- [x] `engine/` passes `mypy --strict`
+- [x] Phantom recall ≥0.90 against the 12 planted `phantom_stock` answer-key events
+
+**Result:** PASS, 2026-09-25. 41/41 tests pass (7 new engine tests: 6 Hypothesis property tests for ORD-8 + 1 phantom-recall test), ruff clean, `mypy --strict` clean on `freshpilot/engine`.
+
+- **Phantom-stock recall: 12/12 (100%)**, all with `zero_run_probability` many orders of magnitude below the 0.001 threshold (e.g. 1e-07 to 1e-33) — not a marginal pass. Getting here required a real fix, not just writing the detector: see the M1 correction note above (the generator's phantom-stock shrink left a nonzero sales trickle, which broke the "consecutive zero days" signal down to 5/12 until fixed).
+- ORD-8 property tests (never negative, always a case-pack multiple, monotonic non-decreasing in target, monotonic non-increasing in on-hand, respects min/max case bounds) all pass under Hypothesis's generated inputs, plus a determinism check that `compute_order` never uses randomness for `calc_id`.
+
+Scope note: `simulate_order` reads its inputs (book on-hand, forecasts, waste history) from an `EngineContext` the caller assembles from the pipeline tables — there's no live daily-pipeline orchestrator yet (that's M7), so M4's own tests build that context directly from `generate()` output rather than from a running pipeline.
 
 ---
 
