@@ -399,7 +399,11 @@ def build_products(rng: np.random.Generator) -> pd.DataFrame:
                     "max_order_cases": int(rng.integers(20, 60)),
                 }
             )
-    return pd.DataFrame(rows)
+    frame = pd.DataFrame(rows)
+    # Synthetic storage policy: one maximum replenishment fits on the shelf.
+    # Separate column so managers can configure a tighter physical limit.
+    frame["max_shelf_capacity"] = frame["max_order_cases"] * frame["case_pack"]
+    return frame
 
 
 _SUPPLIER_POOL_BY_DEPT: dict[str, list[str]] = {

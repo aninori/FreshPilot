@@ -1,5 +1,51 @@
 # FreshPilot — build progress
 
+## Correctness repair — 2026-09-25
+
+- [x] Use calibrated quantiles throughout ordering; remove test-tuned target multiplier.
+- [x] Make calculation IDs depend on complete inputs.
+- [x] Correct backtest stock conservation, book-inventory baseline and information timing.
+- [x] Measure escalation after routing; report full business metrics honestly.
+- [x] Add regression tests and rerun quality checks and evaluation gates.
+- [x] Complete M6 validation against recorded tool outputs and enforce budgets/fallback (mocked provider verification).
+- [ ] Proceed to M7–M10 after their prerequisite acceptance gates pass.
+
+The user explicitly chose to keep the milestone gate and investigate ordering /
+delivery assumptions first. See [correctness-review.md](correctness-review.md).
+The earlier M5 PASS below is a historical record, superseded by this repair.
+The literal BRD baseline, daily-delivery sensitivity, and a cycle-aware baseline
+proposal are reported separately; no passing sensitivity result substitutes for
+the primary gate. Live-provider acceptance and full pipeline/UI work remain open.
+
+**Corrected evaluation: PASS (fallback), 2026-09-25.** G1 WAPE improvement
+26.03%; G2 interval coverage 79.18%; G3 phantom precision 100%, recall 91.67%;
+G4 match F1 0.9676. G5 waste 6.15% versus baseline 6.50%, stockouts 18.92%
+versus 61.46%. G6 escalation 12/1280 (0.94%); G7 schema and numerical
+faithfulness 100% on 25 findings; G8 fallback cost and LLM touches zero.
+All three delivery diagnostic scenarios pass. Full suite: 131 passed with
+three SHAP deprecation warnings; Ruff and mypy (58 files) passed.
+After the final dotenv, bakery-unit and schema changes, the focused agent,
+engine-provenance and configuration suite passed (49 tests). The safety suite
+including the additional bakery regression passed separately (15 tests).
+Ruff, mypy and whitespace checks remain clean. Pytest also reported an
+unwritable cache directory; this did not prevent test execution.
+
+The user authorized a live OpenAI smoke test with a $0.05 total cap. Three live
+attempts consumed an estimated $0.00831255 at standard token rates. Requests
+succeeded, but exposed missing structured-submit enforcement, missing tool
+evidence on retry, and a numeric-only verifier accepting 24 units as 24 cases.
+All three defects were repaired with regression coverage. The saved
+`reports/live-agent-smoke-final.json` is a pre-unit-fix diagnostic, not a passing
+acceptance result. A fourth run (`reports/live-agent-smoke-validated.json`)
+returned an LLM finding, passed current validators and correctly escalated the
+phantom-stock case. Cumulative estimated token cost was $0.00905430, below the
+authorized $0.05 cap. Focused safety/guardrail tests: 43 passed; Ruff and mypy
+passed. This is one live case, not a representative quality evaluation: the
+output also paraphrases 22 days as “three weeks”, which current digit-based
+faithfulness checks do not assess. Broader live quality acceptance remains open;
+M7 has not started.
+
+
 Tracks milestones from BRD §12. Each milestone starts with a checklist here, gets ticked off as work lands, and ends with a results summary before the next milestone begins.
 
 Open design questions raised along the way (see chat) are logged inline at the milestone where they became concrete, with the resolution taken.
@@ -229,6 +275,10 @@ Scope note: `simulate_order` reads its inputs (book on-hand, forecasts, waste hi
 
 ## M5 — Exceptions + item reasons + backtest
 
+**Superseded:** the original PASS below used a test-tuned target multiplier and a
+backtest with inconsistent stock accounting and replenishment timing. Use the
+current generated evaluation and the correctness repair section above instead.
+
 **Acceptance:** waste and stockouts both below baseline; ≤1% escalated.
 
 This milestone took real iteration — every number below is the result of finding and fixing a genuine bug, not tuning a threshold until a test went green. Recording the journey since the fixes *are* the engineering content here.
@@ -278,20 +328,43 @@ G6 (escalation rate <= 1%): 2.03% (26/1280) -- see the honest accounting above; 
 
 **Acceptance:** schema validity 100%; faithfulness 100%; routing accuracy ≥0.90; runs with and without API key.
 
+**Scope for this milestone:** AGT-1..6 (investigator) and GRD-1..7. AGT-7..9 (Ask FreshPilot chat) is M10's per the BRD's own milestone table, not repeated here.
+
+Design decisions:
+
+- **LLM provider swapped to OpenAI, not Anthropic (explicit user decision, not a silent substitution).** BRD/CLAUDE.md specify `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` and the `anthropic` SDK throughout. Asked the user directly given the scope of the change (different SDK, different tool-calling API shape); they chose OpenAI since that's the key they have. `.env.example`/`config.py` now use `OPENAI_API_KEY`/`OPENAI_MODEL` (default `gpt-4o-mini` — cost-conscious, matches G8's spirit, function-calling capable). CLAUDE.md itself is left untouched (it's the user's own governing doc, not mine to edit) — this deviation lives here and in the code, the same way the sentence-transformers swap in M2 did.
+- **Fallback mode is the fully-tested path; LLM mode is structurally complete but not live-tested.** No API key (Anthropic or OpenAI) is available in this environment, so `make test`/CI only ever exercises `FRESHPILOT_LLM=off` anyway (rule 4 requires this regardless of provider). The OpenAI code path is written and reviewed but its live behavior is unverified until a real key is supplied.
+- **Trace recording here is lightweight** (tool name/args/result-summary/duration, in-memory + returned with the Finding) — the full DuckDB-backed trace *store* with a queryable schema is M7's OBS-1 job; M6 just needs to "record every tool call," per CLAUDE.md's agent notes.
+
+Checklist:
+
 - [ ] LangGraph investigator: triage → investigate → validate → route → narrate
 - [ ] Tools (AGT-1), `Finding` schema (AGT-2/9.6)
 - [ ] Guardrails: provenance, policy band, faithfulness, unit veto, routing (GRD-1..7)
 - [ ] Fallback templates (AGT-6)
 - [ ] Match review agent (schema `MatchReview`)
-- [ ] Ask FreshPilot chat agent (AGT-7..9)
 - [ ] `guardrails/` passes `mypy --strict`
-- [ ] Run investigator on strawberries-style phantom-stock case in fallback mode and LLM mode; show both `Finding` outputs and the trace
+- [ ] Run investigator on strawberries-style phantom-stock case in fallback mode; show the `Finding` output and the trace (LLM mode shown too if a key is supplied)
 
 **Result:** _(filled in after run)_
 
 ---
 
 ## M7 — Pipeline orchestrator + observability store
+
+M6 acceptance passed 2026-09-26: 140 tests, Ruff and mypy clean; fallback
+schema/faithfulness 100%, routing test above 90%; live provider exercised with
+guardrail rejection and safe fallback. Total authorized live test cost about
+$0.01376325. Written numbers, case units, durations and required shelf checks
+are now checked. Synthetic shelf capacity defaults to max replenishment units
+and is stored separately; catalog unit veto also checks the target product.
+
+Implementation plan:
+- [ ] Snapshot completed daily results atomically; failed runs remain inspectable.
+- [ ] Record all twelve stages, with cached training outputs labelled explicitly.
+- [ ] Persist orders, decisions, match reviews, calculations and agent traces.
+- [ ] Apply yield plans and daily bakery quantities; share LLM spend/touch limits.
+- [ ] Measure full-data runtime and exercise failure/repeat-run behavior.
 
 **Acceptance:** `make pipeline` completes ≤5 min; traces and stage timings populated.
 
@@ -305,6 +378,16 @@ G6 (escalation rate <= 1%): 2.03% (26/1280) -- see the honest accounting above; 
 
 ## M8 — FastAPI endpoints
 
+M7 acceptance: full dataset completed in 58.33 seconds, 1280 items, 12 pending;
+all twelve stage records and local traces populated. Repeated snapshots agree;
+failed runs do not replace the latest completed run. 141 tests pass; Ruff/mypy clean.
+Catalog scores and held-out forecasts are reused and explicitly marked cached.
+
+M8 plan:
+- [ ] Read endpoints use only the latest completed snapshot and measured reports.
+- [ ] Transactional approval, adjustment, undo, send and catalog review with audit log.
+- [ ] Verify every endpoint contract and pending/override/sent-order gates.
+
 **Acceptance:** contract tests for every endpoint in §9.8.
 
 - [ ] All routes in §9.8 implemented
@@ -316,15 +399,43 @@ G6 (escalation rate <= 1%): 2.03% (26/1280) -- see the honest accounting above; 
 
 ## M9 — Web app matching UI reference
 
+M8 acceptance passed: endpoint contracts and transaction gates tested; 142 tests
+pass, Ruff/mypy clean. Full-data items read p95 85.46 ms over 25 local requests.
+Read every reference screen, styles, chart, table, drawer and interaction code.
+M9 plan: port reference tokens/layout to React; wire real API responses; add
+responsive/keyboard states; verify approve/send/trace flow with Playwright and
+inspect desktop, mobile, light and dark screenshots.
+
+2026-09-26 status: all screen components are wired to API responses, with local
+fonts/icons, responsive layouts, theme toggle, keyboard focus, charts and action
+controls. TypeScript and Vite production build pass. Added a Playwright test for
+approve → send → trace, item search, catalog/impact, mobile/dark and chat sources.
+The test could not launch because Chromium revision 1243 is absent. Automatic
+approval review rejected the browser installation because its usage quota was
+exhausted. No visual acceptance or M9 PASS is claimed. M10 has not started;
+the current chat endpoint only supplies a simple read-only summary.
+
+**M9 result: PASS, 2026-09-26.** Chromium was subsequently installed and the
+Playwright approve-all → send → open-trace flow passed in 1.2 minutes. Desktop,
+mobile, light, dark, Decisions, Catalog, Impact and Observability screenshots
+were inspected. Catalog review pagination was added after the visual review.
+
+M10 plan:
+- [x] Read-only streamed chat with recorded sources and refusal to mutate orders.
+- [x] README screenshot, measured results, architecture and run instructions.
+- [x] One-command offline demo orchestration without duplicate model training.
+- [x] Time a clean demo build and rerun all quality/evaluation/browser checks.
+
 **Acceptance:** Playwright smoke: approve all decisions → send orders; visual review against reference.
 
-- [ ] Full screen-by-screen study of `docs/ui-reference.html` (all 8 screens + chat drawer, light/dark)
-- [ ] React app scaffold (Vite + TS), design tokens ported from reference
-- [ ] Screens wired to live API data (no hardcoded arrays)
-- [ ] Hand-built SVG charts w/ tooltips
-- [ ] Playwright smoke test
+- [x] Full screen-by-screen study of `docs/ui-reference.html` (all 8 screens + chat drawer, light/dark)
+- [x] React app scaffold (Vite + TS), design tokens ported from reference
+- [x] Screens wired to live API data (no hardcoded arrays)
+- [x] Hand-built SVG charts w/ tooltips
+- [x] Playwright smoke test
 
-**Result:** _(filled in after run)_
+**Result:** PASS. Browser flow passed in 1.1 minutes after catalog pagination;
+desktop/mobile and light/dark screenshots were inspected.
 
 ---
 
@@ -332,8 +443,17 @@ G6 (escalation rate <= 1%): 2.03% (26/1280) -- see the honest accounting above; 
 
 **Acceptance:** `make demo` from clean clone ≤10 min; README with results table from `reports/eval.md`.
 
-- [ ] Chat assistant wired end-to-end
-- [ ] Full README: pitch, screenshot, architecture diagram, results table, how to run, independence notice
-- [ ] `make demo` clean-clone timing check
+- [x] Chat assistant wired end-to-end
+- [x] Full README: pitch, screenshot, architecture diagram, results table, how to run, independence notice
+- [x] `make demo` clean-clone timing check
 
-**Result:** _(filled in after run)_
+**Result:** PASS, 2026-09-26. The offline demo regenerated data, trained models,
+ran the pipeline, passed G1–G8, built the production frontend, and verified both
+servers ready in 124.7 seconds. Full suite: 142 passed; Ruff and mypy clean.
+
+Decisions reference follow-up (2026-09-26): matched the supplied HTML's reason
+pills, department tints, action icons, confidence bars, recommendation units,
+math footer, completed summaries and Go to orders button. Preserved recorded
+data and approval state. Production build and both desktop/mobile browser tests
+pass, including math expansion, completion progress and navigation to Orders.
+Inspected live cards and screenshots; live browser checks were read-only.

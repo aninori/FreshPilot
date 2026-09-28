@@ -1,0 +1,147 @@
+<title>FreshPilot order flow</title>
+<link rel="stylesheet" href="diagram.css">
+<!-- Source of truth for order-flow.png. Every claim maps to code: see comments. -->
+
+<h1>FreshPilot · how an order gets made</h1>
+<div class="sub">ML forecasts the range. Math decides the order. Agents explain and escalate. People have the final say.</div>
+<div class="pills">
+  <div class="pill">LLM runs on <b>≤ 2% of items</b></div>  <!-- pipeline/run.py stage 9: floor(products * .02) -->
+  <div class="pill">LLM sets <b>0 quantities</b></div>
+</div>
+
+<div class="col" style="left:50px">1 · DATA</div>
+<div class="col" style="left:362px">2 · UNDERSTAND</div>
+<div class="col" style="left:762px">3 · DECIDE</div>
+<div class="col" style="left:1138px">4 · ROUTE &amp; EXPLAIN</div>
+<div class="col" style="left:1576px">5 · PEOPLE DECIDE</div>
+
+<!-- 1 · DATA (pipeline/run.py TABLES) -->
+<div class="box plain" style="left:50px;top:193px;width:250px;height:74px"><h3>POS sales</h3><p>Daily, by item, promo flag</p></div>
+<div class="box plain" style="left:50px;top:283px;width:250px;height:74px"><h3>Deliveries &amp; waste</h3><p>Receipts, waste log</p></div>
+<div class="box plain" style="left:50px;top:373px;width:250px;height:74px"><h3>Book inventory</h3><p>What the system believes</p></div>
+<div class="box plain" style="left:50px;top:463px;width:250px;height:74px"><h3>Supplier listings</h3><p>Raw names, units, packs</p></div>
+<div class="box plain" style="left:50px;top:553px;width:250px;height:74px"><h3>Promos · weather</h3><p>Calendar, yields, bake</p></div>
+<div class="box plain store" style="left:50px;top:653px;width:250px;height:88px"><h3>DuckDB · MLflow</h3><p>Synthetic data + answer key</p></div>
+
+<!-- 2 · UNDERSTAND -->
+<div class="box det" style="left:362px;top:193px;width:325px;height:142px">
+  <span class="badge">RULES+ML</span><h3>Catalog matching</h3>
+  <p>Parse units and packs, TF‑IDF char n‑gram blocking, calibrated logistic match score. ≥ 0.90 merge · &lt; 0.60 separate.</p>
+</div>
+<div class="box det" style="left:362px;top:353px;width:325px;height:100px">
+  <span class="badge">RULES</span><h3>Match review</h3>
+  <p>0.60–0.90 band: lean at 0.75 + unit veto. Manager confirms.</p>
+</div>
+<div class="box det" style="left:362px;top:470px;width:325px;height:118px">
+  <span class="badge b-ml">ML</span><h3>Demand forecast</h3>
+  <p>LightGBM, one model per quantile P10–P90, CQR‑calibrated 80% range, SHAP drivers.</p>
+</div>
+<div class="box det" style="left:362px;top:604px;width:325px;height:137px">
+  <span class="badge">STATS</span><h3>Inventory estimate</h3>
+  <p>Book − expected shrink. Poisson: P(0 sales | stock real) &lt; 0.1% → likely phantom stock.</p>
+</div>
+
+<!-- 3 · DECIDE -->
+<div class="box det" style="left:762px;top:193px;width:312px;height:220px">
+  <span class="badge">MATH</span><h3>Order engine</h3>
+  <p>Newsvendor critical ratio picks the demand quantile. Case packs, min/max cases, cut‑yield plans, bake plans.</p>
+  <p class="calc mono">every quantity → calc_id</p>
+</div>
+<div class="box det" style="left:762px;top:450px;width:312px;height:170px">
+  <span class="badge">RULES</span><h3>Exception checks</h3>
+  <p>Phantom stock · shrink spike · order swing · low‑confidence match · yield or bake plan change</p>
+</div>
+
+<!-- 4 · ROUTE & EXPLAIN -->
+<div class="box det" style="left:1138px;top:193px;width:373px;height:128px">
+  <span class="badge">RULES</span><h3>No exception · ~99%</h3>
+  <p>Auto‑approved with a one‑line reason. Every item visible and overridable.</p>
+</div>
+<div class="box llm" style="left:1138px;top:341px;width:373px;height:214px">
+  <span class="badge b-llm">LLM</span><h3>Flagged · Investigator</h3>
+  <p>LangGraph + OpenAI tool calling over 9 read‑only tools incl. <code>simulate_order</code>. Returns a structured Finding. Beyond the 2% cap, or with no key, a deterministic template.</p>
+</div>
+<div class="box gate" style="left:1138px;top:583px;width:373px;height:158px">
+  <span class="badge">GATE</span><h3>Guardrails</h3>
+  <p>calc_id provenance · policy band 0.5–1.6× + shelf cap · every number matches a tool output · risk routing. Fail → retry once → template.</p>
+</div>
+
+<!-- 5 · PEOPLE DECIDE (api/app.py, api/workflow.py) -->
+<div class="box human" style="left:1576px;top:193px;width:373px;height:330px">
+  <span class="badge b-human">HUMAN</span><h3>Store manager</h3>
+  <ul>
+    <li>Approve · Adjust · <b>Reject</b> + reason</li>
+    <li>Adjust outside 0.6–1.5× needs a reason</li>
+    <li>Override any auto‑approved item</li>
+    <li>Auto‑approve kill switch per department</li>
+    <li>Assign shelf checks; staff count re‑runs the engine</li>
+    <li>Ask FreshPilot: read‑only chat <b style="color:#5a47a8">(LLM)</b></li>
+  </ul>
+</div>
+<div class="box plain" style="left:1576px;top:556px;width:373px;height:118px">
+  <span class="badge b-grey">OUT</span><h3>Supplier orders</h3>
+  <p>Send the batch; recall until 6 PM. Stored as an order batch (no live supplier link).</p>
+</div>
+
+<!-- Observability & learning loop -->
+<div class="box obs" style="left:50px;top:800px;width:1900px;height:170px">
+  <h3 style="color:#6b4a0f">Observability &amp; learning loop</h3>
+  <div class="chips">
+    <span class="chip">12 pipeline stages timed: rules vs ML vs LLM</span>
+    <span class="chip">DuckDB traces + every tool call</span>
+    <span class="chip">LLM cost cap $1 / run</span>
+    <span class="chip">MLflow: forecast models, WAPE, coverage</span>
+    <span class="chip">Model health: weekly coverage, PSI drift</span>
+    <span class="chip">Eval harness vs answer key (G1–G8)</span>
+    <span class="chip">Audit event log</span>
+  </div>
+  <div class="chips">
+    <span class="chip dark">Manager reasons feed back →</span>
+    <span class="chip">manager_feedback table</span>
+    <span class="chip">3 overrides in a category within 14 days → auto‑approve tightened for that category</span>
+    <span class="chip todo">not built yet: retrain on feedback · agent eval cases · Langfuse export</span>
+  </div>
+</div>
+
+<div class="legend">
+  <span><i class="sw" style="background:#e3f0e8;border-color:#1f6b47"></i>Deterministic / ML: computes and decides</span>
+  <span><i class="sw" style="background:#ece8f8;border-color:#5a47a8"></i>LLM: investigates and explains</span>
+  <span><i class="sw" style="border-style:dashed;border-color:#1f6b47"></i>Human: final say</span>
+  <span><i class="sw" style="background:#fcefd9;border-color:#d9a441"></i>Observability &amp; feedback</span>
+</div>
+<div class="foot">Independent prototype · synthetic data</div>
+
+<svg class="wires" viewBox="0 0 2000 1063">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9" fill="none" stroke="#7d847f" stroke-width="1.6"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,1 L9,5 L0,9" fill="none" stroke="#1f6b47" stroke-width="2"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,1 L9,5 L0,9" fill="none" stroke="#c98a1b" stroke-width="1.6"/></marker>
+  </defs>
+  <g fill="none" stroke="#7d847f" stroke-width="1.6">
+    <!-- data bus -->
+    <path d="M300,230 H330 M300,320 H330 M300,410 H330 M300,500 H330 M300,590 H330 M330,230 V672"/>
+    <path d="M330,258 H360" marker-end="url(#a)"/>
+    <path d="M330,528 H360" marker-end="url(#a)"/>
+    <path d="M330,672 H360" marker-end="url(#a)"/>
+    <path d="M524,335 V351" marker-end="url(#a)"/>
+    <!-- understand -> decide -->
+    <path d="M687,258 H724 M687,528 H724 M687,672 H724 M724,258 V672"/>
+    <path d="M724,300 H760" marker-end="url(#a)"/>
+    <path d="M918,413 V448" marker-end="url(#a)"/>
+    <!-- exceptions -> route -->
+    <path d="M1074,535 H1106 V250"/>
+    <path d="M1106,250 H1136" marker-end="url(#a)"/>
+    <path d="M1106,445 H1136" marker-end="url(#a)"/>
+    <path d="M1324,555 V581" marker-end="url(#a)"/>
+    <path d="M1511,250 H1574" marker-end="url(#a)"/>
+    <path d="M1762,523 V554" marker-end="url(#a)"/>
+  </g>
+  <path d="M1511,662 H1544 V425 H1574" fill="none" stroke="#1f6b47" stroke-width="2.4" marker-end="url(#g)"/>
+  <g fill="none" stroke="#c98a1b" stroke-width="1.8" stroke-dasharray="6 5">
+    <path d="M1949,360 H1978 V884 H1952" marker-end="url(#o)"/>
+    <path d="M1440,800 V743" marker-end="url(#o)"/>
+  </g>
+</svg>
+<div class="lbl" style="left:1082px;top:226px">clear</div>
+<div class="lbl" style="left:1078px;top:421px">flagged</div>
+<div class="lbl" style="left:1450px;top:760px;color:#a8741a">tightens routing</div>

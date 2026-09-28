@@ -12,10 +12,10 @@ from typing import Any
 import duckdb
 import pandas as pd
 
-from freshpilot.config import SEED
+from freshpilot.config import SEED, load_settings
 from freshpilot.engine.bakery import SAME_DAY_SHELF_LIFE, compute_bake_quantity
 from freshpilot.engine.inventory import trailing_waste_rate
-from freshpilot.engine.newsvendor import TARGET_CALIBRATION_FACTOR, compute_critical_ratio, target_quantile
+from freshpilot.engine.newsvendor import compute_critical_ratio, target_quantile
 from freshpilot.engine.simulate import EngineContext, simulate_order
 from freshpilot.exceptions.detectors import (
     ExceptionFlag,
@@ -25,7 +25,8 @@ from freshpilot.exceptions.detectors import (
     detect_shrink_spike,
 )
 from freshpilot.exceptions.reasons import reason_for_item
-from freshpilot.forecasting.model import QUANTILE_COLUMNS, QUANTILES
+from freshpilot.forecasting.horizon import calibrated_quantiles
+from freshpilot.forecasting.model import QUANTILES
 
 DB_PATH = Path("data") / "freshpilot.duckdb"
 ESCALATION_TARGET = 0.01
@@ -45,7 +46,7 @@ def _driver_label(row: pd.Series) -> str | None:
     return None
 
 
-def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
+def run(db_path: Path = DB_PATH, seed: int = SEED, date: str | None = None) -> dict[str, Any]:
     con = duckdb.connect(str(db_path))
     try:
         products = con.execute("SELECT * FROM products").df()
@@ -66,7 +67,10 @@ def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
         promotions["start_date"] = pd.to_datetime(promotions["start_date"])
         promotions["end_date"] = pd.to_datetime(promotions["end_date"])
 
-        demo_date = forecasts["date"].max()
+        requested = date or load_settings().demo_date
+        demo_date = pd.Timestamp(requested) if requested else forecasts["date"].max()
+        if demo_date not in set(forecasts["date"]):
+            raise ValueError(f"No forecasts available for demo date {demo_date}")
 
         day_calendar = calendar[calendar["date"] == demo_date].iloc[0]
         day_weather = weather[weather["date"] == demo_date].iloc[0]
@@ -120,12 +124,8 @@ def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
             for d in lookback_dates:
                 fc_d = p_forecasts[p_forecasts["date"] == d]
                 if len(fc_d):
-                    # q50*cycle_days is a cheap proxy for the real CR-based target
-                    # (avoids a full recompute per lookback day) -- must carry the
-                    # same TARGET_CALIBRATION_FACTOR target_quantile() applies, or
-                    # today's (calibrated) target looks like a permanent ~50% swing
-                    # against an (uncalibrated) trailing average.
-                    prior_targets.append(float(fc_d.iloc[0]["q50"]) * cycle_days * TARGET_CALIBRATION_FACTOR)
+                    # Historical median cycle demand is a proxy for usual demand.
+                    prior_targets.append(float(fc_d.iloc[0]["q50"]) * cycle_days)
             trailing_avg_target = sum(prior_targets) / len(prior_targets) if len(prior_targets) >= 2 else 0.0
             has_driver = (
                 pid in promo_today
@@ -146,7 +146,7 @@ def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
             if product.dept_id == "bakery":
                 fc_row = p_forecasts[p_forecasts["date"] == demo_date]
                 quantiles = (
-                    {q: float(fc_row.iloc[0][c]) for q, c in zip(QUANTILES, QUANTILE_COLUMNS, strict=True)}
+                    dict(zip(QUANTILES, calibrated_quantiles(fc_row.iloc[0]).values(), strict=True))
                     if len(fc_row) else dict.fromkeys(QUANTILES, 0.0)
                 )
                 waste_rate = trailing_waste_rate(p_waste, p_inventory, pid, demo_date)
@@ -171,7 +171,7 @@ def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
                     fc_d = p_forecasts[p_forecasts["date"] == d]
                     if len(fc_d) == 0:
                         continue
-                    q_d = {q: float(fc_d.iloc[0][c]) for q, c in zip(QUANTILES, QUANTILE_COLUMNS, strict=True)}
+                    q_d = dict(zip(QUANTILES, calibrated_quantiles(fc_d.iloc[0]).values(), strict=True))
                     cr_d = compute_critical_ratio(
                         float(product.unit_cost), float(product.unit_price), float(product.salvage_value),
                         SAME_DAY_SHELF_LIFE, trailing_waste_rate(p_waste, p_inventory, pid, d),

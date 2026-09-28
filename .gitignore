@@ -13,6 +13,7 @@ uv.lock.bak
 # Data & model artifacts
 data/*.duckdb
 data/*.parquet
+data/models/
 mlruns/
 mlflow.db
 reports/*
@@ -25,6 +26,9 @@ reports/*
 # Node / web
 web/node_modules/
 web/dist/
+web/test-results/
+web/playwright-report/
+web/*.tsbuildinfo
 
 # OS
 .DS_Store

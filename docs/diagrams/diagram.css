@@ -1,0 +1,39 @@
+/* Shared styles for the architecture diagrams. Fixed 2000x1063 canvas, rendered at 1.6x to PNG. */
+* { box-sizing: border-box; margin: 0; }
+body { width: 2000px; height: 1063px; position: relative; background: #f6f4ef; color: #1d2a22;
+  font: 16px/1.45 "Segoe UI", "DejaVu Sans", Arial, sans-serif; overflow: hidden; }
+code, .mono { font-family: Consolas, "DejaVu Sans Mono", monospace; font-size: 14.5px; }
+h1 { position: absolute; left: 50px; top: 34px; font-size: 38px; font-weight: 800; letter-spacing: .2px; }
+.sub { position: absolute; left: 50px; top: 92px; font-size: 20px; color: #5b6660; }
+.pills { position: absolute; right: 50px; top: 44px; display: flex; gap: 14px; }
+.pill { border: 1px solid #d6d2c8; background: #fff; border-radius: 22px; padding: 6px 18px; font-size: 18px; }
+.col { position: absolute; top: 158px; font-size: 15px; font-weight: 700; letter-spacing: 2.5px; color: #8a918c; }
+.box { position: absolute; border-radius: 12px; padding: 14px 18px; border: 1.5px solid #dcd8cf; background: #fff; font-size: 15.5px; }
+.box h3 { font-size: 20px; font-weight: 800; margin-bottom: 4px; line-height: 1.2; }
+.badge + h3 { padding-right: 70px; }
+.box p, .box li { color: #3d4a42; }
+.box ul { padding-left: 20px; }
+.det { background: #e3f0e8; border-color: #a9cdb6; }
+.llm { background: #ece8f8; border-color: #b9b0e3; }
+.llm h3 { color: #3f2f8f; }
+.gate { background: #e3f0e8; border: 3px solid #1f6b47; }
+.human { background: #fff; border: 2.5px dashed #1f6b47; }
+.store { border-style: dashed; }
+.obs { background: #fcefd9; border-color: #ecd3a6; }
+.plain { background: #fff; }
+.badge { position: absolute; right: 14px; top: 14px; font-size: 12px; font-weight: 800; letter-spacing: 1px;
+  color: #fff; background: #1f6b47; border-radius: 6px; padding: 2px 8px; }
+.b-llm { background: #5a47a8; } .b-human { background: #0f3b27; } .b-grey { background: #e6e2d9; color: #5b6660; }
+.b-ml { background: #2f8a5c; }
+.calc { margin-top: 10px; color: #1f6b47; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.chip { background: #fff; border: 1px solid #ddd6c6; border-radius: 6px; padding: 3px 12px; font-size: 15.5px; color: #2d3a32; }
+.chip.dark { background: #0f3b27; color: #fff; border-color: #0f3b27; }
+.chip.todo { background: transparent; border-style: dashed; color: #8a918c; }
+.chip.ok { background: #e3f0e8; border-color: #a9cdb6; color: #1f5a3c; }
+.legend { position: absolute; left: 50px; top: 1008px; display: flex; gap: 34px; font-size: 17px; color: #5b6660; align-items: center; }
+.sw { display: inline-block; width: 15px; height: 15px; border-radius: 3px; vertical-align: -2px; margin-right: 8px; border: 1.5px solid; }
+.foot { position: absolute; right: 50px; top: 1012px; font-size: 15px; color: #8a918c; }
+.lbl { position: absolute; font-size: 14px; color: #6b746e; }
+.red { color: #c0392b; }
+svg.wires { position: absolute; inset: 0; pointer-events: none; }

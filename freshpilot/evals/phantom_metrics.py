@@ -36,18 +36,27 @@ def compute_phantom_metrics(
     """
     truth = set(answer_key.loc[answer_key["type"] == "phantom_stock", "product_id"])
 
+    inventory_groups = dict(tuple(inventory_book.groupby("product_id")))
+    waste_groups = dict(tuple(waste_log.groupby("product_id")))
+    sales_groups = dict(tuple(sales_daily.groupby("product_id")))
+    forecast_groups = dict(tuple(forecasts.groupby("product_id")))
+
     flagged: set[str] = set()
-    for pid in products["product_id"]:
-        book_rows = inventory_book[(inventory_book["product_id"] == pid) & (inventory_book["date"] == as_of)]
-        fc_rows = forecasts[(forecasts["product_id"] == pid) & (forecasts["date"] == as_of)]
+    for product in products.itertuples(index=False):
+        pid = product.product_id
+        inventory = inventory_groups.get(pid, inventory_book.iloc[:0])
+        waste = waste_groups.get(pid, waste_log.iloc[:0])
+        sales = sales_groups.get(pid, sales_daily.iloc[:0])
+        forecast = forecast_groups.get(pid, forecasts.iloc[:0])
+        book_rows = inventory[inventory["date"] == as_of]
+        fc_rows = forecast[forecast["date"] == as_of]
         if len(book_rows) == 0 or len(fc_rows) == 0:
             continue
         book_on_hand = float(book_rows.iloc[0]["book_on_hand"])
         daily_mean = float(fc_rows.iloc[0]["q50"])
-        waste_rate = trailing_waste_rate(waste_log, inventory_book, pid, as_of)
-        zeros = consecutive_zero_sales_days(sales_daily, pid, as_of)
-        shelf_life = int(products.loc[products["product_id"] == pid, "shelf_life_days"].iloc[0])
-        estimate = estimate_inventory(shelf_life, book_on_hand, daily_mean, waste_rate, zeros)
+        waste_rate = trailing_waste_rate(waste, inventory, pid, as_of)
+        zeros = consecutive_zero_sales_days(sales, pid, as_of)
+        estimate = estimate_inventory(int(product.shelf_life_days), book_on_hand, daily_mean, waste_rate, zeros)
         if estimate.is_phantom_stock:
             flagged.add(pid)
 

@@ -53,7 +53,8 @@ DDL: dict[str, str] = {
             salvage_value DOUBLE NOT NULL,
             is_random_weight BOOLEAN NOT NULL,
             min_order_cases INTEGER NOT NULL,
-            max_order_cases INTEGER NOT NULL
+            max_order_cases INTEGER NOT NULL,
+            max_shelf_capacity DOUBLE NOT NULL
         )
     """,
     # Populated by M2's catalog reconciliation pipeline, not by the generator.
@@ -227,6 +228,29 @@ DDL: dict[str, str] = {
             category VARCHAR NOT NULL
         )
     """,
+    # M6 pipeline-stage output (§6.3 stage 9: investigator agent -> `findings`).
+    "findings": """
+        CREATE TABLE findings (
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            date DATE NOT NULL,
+            exception_type VARCHAR NOT NULL,
+            finding VARCHAR NOT NULL,
+            route VARCHAR NOT NULL,
+            source VARCHAR NOT NULL
+        )
+    """,
+    # M6 pipeline-stage output (GRD-7 / §6.3 stage 10: guardrail validation).
+    "guardrail_events": """
+        CREATE TABLE guardrail_events (
+            run_id VARCHAR NOT NULL,
+            product_id VARCHAR NOT NULL REFERENCES products(product_id),
+            guardrail_type VARCHAR NOT NULL,
+            passed BOOLEAN NOT NULL,
+            before_value DOUBLE,
+            after_value DOUBLE,
+            details VARCHAR
+        )
+    """,
 }
 
 # Creation order matters: referenced tables must exist before their FKs do.
@@ -252,6 +276,8 @@ TABLE_ORDER: list[str] = [
     "calculations",
     "exceptions",
     "item_reasons",
+    "findings",
+    "guardrail_events",
 ]
 
 

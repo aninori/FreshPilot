@@ -5,6 +5,7 @@ evaluate against BRD §12 M3's acceptance check, log to MLflow, and persist
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 from typing import Any
@@ -17,7 +18,8 @@ import pandas as pd
 from freshpilot.config import SEED
 from freshpilot.forecasting.baseline import relative_improvement, wape
 from freshpilot.forecasting.calibrate import apply_conformal_margin, empirical_coverage, fit_conformal_margin
-from freshpilot.forecasting.features import build_feature_frame
+from freshpilot.forecasting.explain import _describe_feature
+from freshpilot.forecasting.features import FEATURE_COLUMNS, build_feature_frame
 from freshpilot.forecasting.model import QUANTILE_COLUMNS, predict_quantiles, train_quantile_models
 
 DB_PATH = Path("data") / "freshpilot.duckdb"
@@ -100,6 +102,16 @@ def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
             mlflow.log_metric("wape_baseline", baseline_wape_value)
             mlflow.log_metric("wape_improvement", improvement)
             mlflow.log_metric("coverage_80pct", coverage)
+            artifact_dir = db_path.parent / "models"
+            artifact_dir.mkdir(exist_ok=True)
+            for quantile, model in models.items():
+                model.save_model(str(artifact_dir / f"q{int(quantile * 100)}.txt"))
+            (artifact_dir / "metadata.json").write_text(json.dumps({
+                "seed": seed, "margin": margin.margin,
+                "train_end": str(train_df["date"].max()),
+                "calibration_end": str(calibrate_df["date"].max()),
+            }), encoding="utf-8")
+            mlflow.log_artifacts(str(artifact_dir), artifact_path="models")
 
         forecasts_out = test_preds.copy()
         forecasts_out["date"] = test_df["date"].to_numpy()
@@ -111,6 +123,21 @@ def run(db_path: Path = DB_PATH, seed: int = SEED) -> dict[str, Any]:
         ]
         con.execute("DELETE FROM forecasts")
         con.append("forecasts", forecasts_out)
+        # LightGBM's contribution mode returns exact TreeSHAP values plus a bias
+        # column. Persist the daily drivers so UI reads never rerun the model.
+        contributions = np.asarray(models[0.5].predict(
+            test_df[FEATURE_COLUMNS], pred_contrib=True, num_threads=4,
+        ))[:, :-1]
+        driver_rows = []
+        for position, (_, feature_row) in enumerate(test_df.iterrows()):
+            top = np.argsort(-np.abs(contributions[position]))[:3]
+            drivers = [{"label": _describe_feature(FEATURE_COLUMNS[i], feature_row),
+                        "feature": FEATURE_COLUMNS[i], "value": float(contributions[position, i])} for i in top]
+            driver_rows.append({"date": feature_row["date"], "product_id": feature_row["product_id"],
+                                "drivers": json.dumps(drivers)})
+        con.execute("CREATE TABLE IF NOT EXISTS forecast_drivers (date DATE, product_id VARCHAR, drivers VARCHAR)")
+        con.execute("DELETE FROM forecast_drivers")
+        con.append("forecast_drivers", pd.DataFrame(driver_rows))
 
         return {
             "model_wape": model_wape,

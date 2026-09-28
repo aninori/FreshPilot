@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
-from freshpilot.evals.backtest import TEST_DAYS, run_backtest
+from freshpilot.evals.backtest import TEST_DAYS, run_backtest, settle_day
 from freshpilot.forecasting.model import QUANTILE_COLUMNS
 
 PRODUCT_ID = "P1"
@@ -89,5 +89,55 @@ def test_backtest_demand_conserved_across_sales_waste_and_lost(tiny_tables: dict
 def test_backtest_no_stockouts_when_stock_is_ample(tiny_tables: dict[str, pd.DataFrame]) -> None:
     """Starting on-hand (50) comfortably covers steady demand (10/day) with any
     reasonable reorder policy — neither policy should stock out here."""
-    results = run_backtest(tiny_tables)
+    results = run_backtest(tiny_tables, cadence="daily")
     assert results["freshpilot"].stockout_pct == 0.0
+
+
+def test_EVAL2_cannot_waste_stock_already_sold():
+    assert settle_day(10.0, 0.0, 10.0, 0.5) == (10.0, 0.0, 0.0, 0.0)
+    assert settle_day(10.0, 0.0, 8.0, 0.5) == (8.0, 2.0, 0.0, 0.0)
+
+
+def test_EVAL2_physical_stock_conserved(tiny_tables):
+    tiny_tables["waste_log"]["qty_wasted"] = 100.0
+    for metrics in run_backtest(tiny_tables).values():
+        assert metrics.initial_stock + metrics.total_ordered == pytest.approx(
+            metrics.total_sales + metrics.total_waste + metrics.ending_stock
+        )
+
+
+def test_EVAL2_baseline_uses_book_not_true_stock(tiny_tables):
+    tiny_tables["inventory_book"]["true_on_hand"] = 0.0
+    tiny_tables["inventory_book"]["book_on_hand"] = 100.0
+    ledger = []
+    run_backtest(tiny_tables, ledger=ledger, cadence="daily")
+    first = next(row for row in ledger if row["policy"] == "baseline")
+    assert first["ordered"] == 0.0
+    assert first["lost"] == 10.0
+
+
+def test_EVAL2_future_waste_cannot_change_policy(tiny_tables):
+    original = run_backtest(tiny_tables)
+    future = tiny_tables["waste_log"].copy()
+    future["date"] = tiny_tables["sales_daily"]["date"].max()
+    future["qty_wasted"] = 10000.0
+    tiny_tables["waste_log"] = pd.concat([tiny_tables["waste_log"], future], ignore_index=True)
+    assert run_backtest(tiny_tables) == original
+
+
+def test_FC7_receipts_follow_the_forecast_cycle(tiny_tables):
+    ledger = []
+    run_backtest(tiny_tables, ledger=ledger)
+    assert any(not row["delivery_due"] for row in ledger)
+    assert all(row["ordered"] == 0 for row in ledger if not row["delivery_due"])
+    assert all(row["cycle_days"] == 2 for row in ledger)
+
+
+def test_ORD5_bakery_cannot_carry_stock_overnight(tiny_tables):
+    tiny_tables["products"]["dept_id"] = "bakery"
+    # The catalog can contain longer-lived packaged bread. ORD-5's production
+    # plan still explicitly uses a same-day shelf life.
+    tiny_tables["products"]["shelf_life_days"] = 5
+    ledger = []
+    run_backtest(tiny_tables, ledger=ledger)
+    assert all(row["ending_stock"] == 0 and row["cycle_days"] == 1 for row in ledger)

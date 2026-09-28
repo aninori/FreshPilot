@@ -18,7 +18,30 @@ from freshpilot.forecasting.model import QUANTILE_COLUMNS
 DEFAULT_CYCLE_DAYS = 3
 
 
+def calibrated_quantiles(row: pd.Series) -> dict[str, float]:
+    """ORD-2: use calibrated endpoints, keeping the interior quantiles intact."""
+    values = {col: float(row[col]) for col in QUANTILE_COLUMNS}
+    values["q10"] = float(row["q10_cal"])
+    values["q90"] = float(row["q90_cal"])
+    ordered = [values[col] for col in QUANTILE_COLUMNS]
+    if not np.isfinite(ordered).all() or min(ordered) < 0 or np.any(np.diff(ordered) < 0):
+        raise ValueError("Forecast quantiles must be finite, nonnegative and non-crossing")
+    return values
+
+
+def calibrated_quantile_frame(frame: pd.DataFrame) -> np.ndarray:
+    """Vectorized equivalent for backtests, preserving the canonical column order."""
+    values = frame[QUANTILE_COLUMNS].to_numpy(dtype=float, copy=True)
+    values[:, 0] = frame["q10_cal"].to_numpy(dtype=float)
+    values[:, -1] = frame["q90_cal"].to_numpy(dtype=float)
+    if not np.isfinite(values).all() or np.any(values < 0) or np.any(np.diff(values, axis=1) < 0):
+        raise ValueError("Forecast quantiles must be finite, nonnegative and non-crossing")
+    return np.asarray(values, dtype=float)
+
+
 def cycle_days_for(dept_id: str) -> int:
+    if dept_id == "bakery":
+        return 1
     return DEPT_CYCLE_DAYS.get(dept_id, DEFAULT_CYCLE_DAYS)
 
 

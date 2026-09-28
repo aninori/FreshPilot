@@ -1,0 +1,130 @@
+<title>FreshPilot exception flow</title>
+<link rel="stylesheet" href="diagram.css">
+<!-- Source of truth for exception-flow.png. Mirrors agents/graph.py, agents/tools.py, agents/schemas.py,
+     guardrails/validation.py and guardrails/routing.py. -->
+<style>
+  .row { position: absolute; top: 195px; width: 237px; height: 252px; }
+  .step { position: absolute; top: 172px; font-size: 15px; font-weight: 700; color: #8a918c; letter-spacing: 1.5px; }
+  .tbl { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .tbl td { padding: 4px 0; border-bottom: 1px solid #ebe8e1; vertical-align: top; font-size: 14.5px; }
+  .tbl td:first-child { width: 49%; font-family: Consolas, "DejaVu Sans Mono", monospace; }
+  .tbl td:last-child { color: #1f6b47; }
+  pre { font: 14.5px/1.62 Consolas, "DejaVu Sans Mono", monospace; margin-top: 8px; color: #1d2a22; white-space: pre; }
+  pre .k { color: #8a918c; } pre .c { color: #9a9f9b; } pre .v { color: #1f6b47; }
+  .checks { list-style: none; padding: 0 !important; font-size: 14.5px; line-height: 1.5; }
+  .checks li::before { content: "✓ "; color: #1f6b47; font-weight: 700; }
+</style>
+
+<h1>How one exception is handled</h1>
+<div class="sub">The LLM sits in the middle, fenced by deterministic steps on both sides. It can read and simulate, never write an order.</div>
+<div class="pills"><div class="pill">LangGraph · <code>agents/graph.py</code> · one run per flagged item</div></div>
+
+<div class="step" style="left:50px">IN</div>
+<div class="step" style="left:323px">1</div>
+<div class="step" style="left:596px">2</div>
+<div class="step" style="left:869px">3</div>
+<div class="step" style="left:1142px">4</div>
+<div class="step" style="left:1415px">5</div>
+<div class="step" style="left:1688px">OUT</div>
+
+<div class="box plain row" style="left:50px"><span class="badge b-grey">INPUT</span><h3>Exception</h3>
+  <p>From the exception checks: product + type. Phantom stock, shrink spike, order swing, low‑confidence match, yield or bake plan change.</p></div>
+<div class="box det row" style="left:323px"><span class="badge">RULES</span><h3>Triage</h3>
+  <p>Runs <code>simulate_order</code> for the base order and loads shelf capacity. Fresh evidence ledger, 30 s deadline, ≤ 8 tool calls; shares the run cost cap.</p></div>
+<div class="box llm row" style="left:596px"><span class="badge b-llm">LLM</span><h3>Investigate</h3>
+  <p>gpt‑4o‑mini picks which evidence to gather, calls read‑only tools, then must call <code>submit_finding</code>. Proposes an action; never a number of its own.</p></div>
+<div class="box gate row" style="left:869px"><span class="badge">GATE</span><h3>Validate</h3>
+  <ul class="checks">
+    <li>Schema + same item</li>
+    <li>calc_id from this run</li>
+    <li>Evidence in tool ledger</li>
+    <li>Every number traced</li>
+    <li>0.5–1.6× base, ≤ shelf</li>
+    <li>≤ 60 words, 3 reasons</li>
+  </ul></div>
+<div class="box det row" style="left:1142px"><span class="badge">RULES</span><h3>Route</h3>
+  <p>Escalate if risk high, confidence low, shelf check or supplier notice, or any guardrail fired. Else auto‑approve.</p></div>
+<div class="box llm row" style="left:1415px"><span class="badge b-llm">LLM</span><h3>Narrate</h3>
+  <p>LLM findings only: plain‑language rewrite, same numbers. Re‑validated; fail → retry once → template. Route recomputed after.</p></div>
+<div class="box human row" style="left:1688px"><span class="badge b-human">HUMAN</span><h3>Decision card</h3>
+  <p>Escalated items wait in Decisions: Approve · Adjust · Reject + reason. A shelf check can go to staff; the count re‑runs the engine.</p></div>
+
+<!-- tools panel: agents/tools.py TOOLS -->
+<div class="box plain" style="left:426px;top:490px;width:654px;height:340px">
+  <span class="badge b-grey">9 TOOLS</span><h3>Read‑only, grounded tools</h3>
+  <table class="tbl">
+    <tr><td>get_sales_history()</td><td>daily units sold, promo flag</td></tr>
+    <tr><td>get_inventory()</td><td>latest book on hand</td></tr>
+    <tr><td>get_forecast()</td><td>P10–P90 + calibrated range</td></tr>
+    <tr><td>explain_forecast()</td><td>top 3 SHAP drivers</td></tr>
+    <tr><td>get_promotions() · get_weather()</td><td>discount, lift · temp, rain</td></tr>
+    <tr><td>get_waste_log()</td><td>units wasted + reason</td></tr>
+    <tr><td>get_catalog_match()</td><td>match score + method</td></tr>
+    <tr><td>simulate_order(overrides)</td><td>calc_id, cases, units · never writes</td></tr>
+  </table>
+</div>
+
+<!-- schema panel: agents/schemas.py Finding -->
+<div class="box plain" style="left:1180px;top:490px;width:770px;height:340px">
+  <span class="badge b-grey">SCHEMA</span><h3>Structured output: Finding</h3>
+<pre>{ <span class="k">"product_id"</span>, <span class="k">"exception_type"</span>: <span class="v">"phantom_stock"</span> | …,
+  <span class="k">"summary"</span>: <span class="c">≤ 60 words</span>,
+  <span class="k">"evidence"</span>: [ {value, unit, source_tool, source_ref} ],
+  <span class="k">"recommended_action"</span>: approve | shelf_check_then_order
+                        | adjust | notify_supplier | review_match,
+  <span class="k">"recommended_calc_id"</span>: <span class="v">"calc_…"</span>   <span class="c">← from simulate_order</span>
+  <span class="k">"precondition"</span>: <span class="c">required for a shelf check</span>,
+  <span class="k">"risk_level"</span>, <span class="k">"confidence"</span>: low | medium | high,
+  <span class="k">"estimated_impact_usd"</span>   <span class="c">← must match an engine calc</span>
+  <span class="k">"reasons"</span>: [ <span class="c">exactly 3</span> ] }</pre>
+</div>
+
+<!-- fallback: agents/fallback.py -->
+<div class="box plain store" style="left:50px;top:870px;width:1900px;height:118px;border-width:1.5px">
+  <h3>Fallback path · the demo never depends on the model</h3>
+  <div class="chips">
+    <span class="chip">LLM off / no API key</span>
+    <span class="chip">Beyond 2% item cap</span>
+    <span class="chip">Cost cap reached</span>
+    <span class="chip">Invalid after retry</span>
+    <span class="chip">30 s or 8 tool calls</span>
+    <span class="chip">API error</span>
+    <span class="chip ok">→ deterministic template fills the same Finding → same validation → same UI · pipeline refuses to publish a failing one</span>
+  </div>
+</div>
+
+<div class="legend">
+  <span><i class="sw" style="background:#e3f0e8;border-color:#1f6b47"></i>Deterministic</span>
+  <span><i class="sw" style="background:#ece8f8;border-color:#5a47a8"></i>LLM</span>
+  <span><i class="sw" style="border-style:dashed;border-color:#1f6b47"></i>Human</span>
+  <span class="red">- - - Guardrail retry</span>
+  <span>Every node, tool call, token and cost is written to the trace store</span>
+</div>
+
+<svg class="wires" viewBox="0 0 2000 1063">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9" fill="none" stroke="#7d847f" stroke-width="1.6"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,1 L9,5 L0,9" fill="none" stroke="#c0392b" stroke-width="1.8"/></marker>
+  </defs>
+  <g fill="none" stroke="#7d847f" stroke-width="1.6">
+    <path d="M287,300 H321" marker-end="url(#a)"/>
+    <path d="M560,300 H594" marker-end="url(#a)"/>
+    <path d="M833,300 H867" marker-end="url(#a)"/>
+    <path d="M1106,300 H1140" marker-end="url(#a)"/>
+    <path d="M1379,300 H1413" marker-end="url(#a)"/>
+    <path d="M1652,300 H1686" marker-end="url(#a)"/>
+    <path d="M687,449 V488" marker-start="url(#a)" marker-end="url(#a)"/>
+    <!-- LLM disabled for this item: triage goes straight to the template -->
+    <path d="M375,449 V868" stroke-dasharray="5 5" marker-end="url(#a)"/>
+    <!-- template -> route -->
+    <path d="M1160,868 V449" stroke-dasharray="5 5" marker-end="url(#a)"/>
+  </g>
+  <g fill="none" stroke="#c0392b" stroke-width="1.8" stroke-dasharray="6 5">
+    <path d="M987,193 V152 H713 V191" marker-end="url(#r)"/>
+    <path d="M1100,449 V868" marker-end="url(#r)"/>
+  </g>
+</svg>
+<div class="lbl red" style="left:735px;top:132px;color:#c0392b">errors → retry once, with the error + tool ledger</div>
+<div class="lbl" style="left:228px;top:640px;text-align:right;width:140px">LLM not used for this item</div>
+<div class="lbl red" style="left:1004px;top:840px;color:#c0392b">still invalid</div>
+<div class="lbl" style="left:1168px;top:840px">template → Route</div>

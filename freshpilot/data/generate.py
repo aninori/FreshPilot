@@ -464,6 +464,10 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
     )
     exceptions = pd.DataFrame(columns=["product_id", "date", "type", "details"])
     item_reasons = pd.DataFrame(columns=["product_id", "date", "reason", "category"])
+    findings = pd.DataFrame(columns=["product_id", "date", "exception_type", "finding", "route", "source"])
+    guardrail_events = pd.DataFrame(
+        columns=["run_id", "product_id", "guardrail_type", "passed", "before_value", "after_value", "details"]
+    )
 
     answer_key = answer_rows_to_df(answer_rows)
 
@@ -479,6 +483,8 @@ def generate(seed: int = SEED) -> dict[str, pd.DataFrame]:
         "calculations": calculations,
         "exceptions": exceptions,
         "item_reasons": item_reasons,
+        "findings": findings,
+        "guardrail_events": guardrail_events,
         "promotions": promotions,
         "weather": weather,
         "calendar": calendar,

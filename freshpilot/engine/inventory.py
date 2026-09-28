@@ -80,7 +80,7 @@ def estimate_inventory(
     shrink_adjusted = book_on_hand * (1 - expected_shrink_fraction)
 
     p_zero = zero_run_probability(daily_mean_demand, consecutive_zeros)
-    is_phantom = p_zero < PHANTOM_PROBABILITY_THRESHOLD
+    is_phantom = book_on_hand > 0 and p_zero < PHANTOM_PROBABILITY_THRESHOLD
 
     if is_phantom:
         mu_effective = -math.log(PHANTOM_PROBABILITY_THRESHOLD) / consecutive_zeros

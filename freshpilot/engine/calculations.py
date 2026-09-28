@@ -4,6 +4,8 @@ deterministic calc_id and a full breakdown for the `calculations` table.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from dataclasses import dataclass, field
 from typing import Any
@@ -53,11 +55,8 @@ def compute_order(
         order_cases = min(order_cases, max_order_cases)
     order_units = float(order_cases * case_pack)
 
-    # Deterministic, not random (NFR-2 / CLAUDE.md rule 6): identical inputs must
-    # always produce the same calc_id.
-    calc_id = f"CALC-{calc_type}-{product_id}-{date}"
-
     breakdown = {
+        **breakdown_extra,
         "target_qty": target_qty,
         "estimated_on_hand": estimated_on_hand,
         "on_order_qty": on_order_qty,
@@ -65,8 +64,13 @@ def compute_order(
         "case_pack": case_pack,
         "min_order_cases": min_order_cases,
         "max_order_cases": max_order_cases,
-        **breakdown_extra,
     }
+    identity = json.dumps(
+        {"product_id": product_id, "calc_type": calc_type, "date": date, "inputs": breakdown},
+        sort_keys=True, separators=(",", ":"), allow_nan=False,
+    )
+    digest = hashlib.sha256(identity.encode()).hexdigest()[:24]
+    calc_id = f"CALC-{calc_type}-{product_id}-{date}-{digest}"
     return OrderCalculation(
         calc_id=calc_id,
         product_id=product_id,

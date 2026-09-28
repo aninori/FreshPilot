@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Web request · cache-aside flow",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1040,
+      510
+    ]
+  },
+  "participants": [
+    {
+      "id": "web-client",
+      "type": "frontend",
+      "label": "Browser",
+      "sublabel": "Request origin"
+    },
+    {
+      "id": "request-api",
+      "type": "backend",
+      "label": "API",
+      "sublabel": "Request handler"
+    },
+    {
+      "id": "response-cache",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "Cached data"
+    },
+    {
+      "id": "record-store",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Source of truth"
+    }
+  ],
+  "segments": [
+    {
+      "from": 148,
+      "to": 254,
+      "label": "Request + cache lookup"
+    },
+    {
+      "from": 264,
+      "to": 410,
+      "label": "Cache miss: query + fill"
+    },
+    {
+      "from": 412,
+      "to": 462,
+      "label": "Respond"
+    }
+  ],
+  "messages": [
+    {
+      "id": "http-request",
+      "from": "web-client",
+      "to": "request-api",
+      "y": 168,
+      "label": "HTTP request",
+      "variant": "emphasis"
+    },
+    {
+      "id": "redis-get",
+      "from": "request-api",
+      "to": "response-cache",
+      "y": 204,
+      "label": "GET cache key"
+    },
+    {
+      "id": "redis-miss",
+      "from": "response-cache",
+      "to": "request-api",
+      "y": 240,
+      "label": "Cache miss",
+      "variant": "return"
+    },
+    {
+      "id": "sql-read",
+      "from": "request-api",
+      "to": "record-store",
+      "y": 284,
+      "label": "Query requested data",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sql-result",
+      "from": "record-store",
+      "to": "request-api",
+      "y": 320,
+      "label": "Return rows",
+      "variant": "return"
+    },
+    {
+      "id": "redis-fill",
+      "from": "request-api",
+      "to": "response-cache",
+      "y": 356,
+      "label": "SET key with result"
+    },
+    {
+      "id": "redis-ack",
+      "from": "response-cache",
+      "to": "request-api",
+      "y": 392,
+      "label": "Cache stored",
+      "variant": "return"
+    },
+    {
+      "id": "http-response",
+      "from": "request-api",
+      "to": "web-client",
+      "y": 426,
+      "label": "HTTP response + data",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "request-api",
+      "from": 168,
+      "to": 436,
+      "type": "backend"
+    },
+    {
+      "participant": "response-cache",
+      "from": 204,
+      "to": 246,
+      "type": "database"
+    },
+    {
+      "participant": "record-store",
+      "from": 284,
+      "to": 326,
+      "type": "database"
+    },
+    {
+      "participant": "response-cache",
+      "from": 356,
+      "to": 398,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Cache-hit alternative",
+      "items": [
+        "Redis returns cached data. The API responds immediately, skipping PostgreSQL and the cache fill."
+      ]
+    }
+  ]
+}

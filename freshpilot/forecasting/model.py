@@ -27,6 +27,8 @@ def train_quantile_models(train_df: pd.DataFrame, seed: int, num_boost_round: in
             "deterministic": True,
             "num_leaves": 31,
             "min_data_in_leaf": 50,
+            "num_threads": 4,
+            "force_col_wise": True,
         }
         dataset = lgb.Dataset(features, label=label, categorical_feature=CATEGORICAL_COLUMNS, free_raw_data=False)
         models[q] = lgb.train(params, dataset, num_boost_round=num_boost_round)
@@ -36,7 +38,7 @@ def train_quantile_models(train_df: pd.DataFrame, seed: int, num_boost_round: in
 def predict_quantiles(models: dict[float, lgb.Booster], df: pd.DataFrame) -> pd.DataFrame:
     """Predict every quantile and enforce FC-4 non-crossing by sorting per row."""
     features = df[FEATURE_COLUMNS]
-    raw = np.column_stack([models[q].predict(features) for q in QUANTILES])
+    raw = np.column_stack([models[q].predict(features, num_threads=4) for q in QUANTILES])
     raw = np.clip(raw, 0, None)
     sorted_vals = np.sort(raw, axis=1)  # FC-4: non-crossing quantiles, sorted per row
     return pd.DataFrame(sorted_vals, columns=QUANTILE_COLUMNS, index=df.index)
